@@ -1,0 +1,11 @@
+Your username: user1
+Your email: user1@example.com
+Your password: user1_password
+
+Your username: user2
+Your email: user2@example.com
+Your password: user2_password
+
+Your username: user3
+Your email: user3@example.com
+Your password: user3_password

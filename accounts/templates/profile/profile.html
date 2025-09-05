@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="profile-card">
+    <h2>{{ profile.user.username }}'s Profile</h2>
+
+    {% if profile.avatar %}
+        <img src="{{ profile.avatar.url }}" alt="Avatar" width="150">
+    {% else %}
+        <p>No profile picture uploaded.</p>
+    {% endif %}
+
+    <p><strong>Name:</strong> {{ profile.name }}</p>
+    <p><strong>Username:</strong> {{ profile.user.username }}</p>
+    <p><strong>Email:</strong> {{ profile.user.email }}</p>
+    <p><strong>Age:</strong> {{ profile.age }}</p>
+    <p><strong>Balance:</strong> ${{ profile.balance }}</p>
+    <p><strong>Gender:</strong> {{ profile.get_gender_display }}</p>
+    <p><strong>Address:</strong> {{ profile.address }}</p>
+    <p><strong>Phone:</strong> {{ profile.phone }}</p>
+    <p><strong>Social Link:</strong>
+        {% if profile.social_link %}
+            <a href="{{ profile.social_link }}" target="_blank">{{ profile.social_link }}</a>
+        {% else %}
+            N/A
+        {% endif %}
+    </p>
+    <p><strong>Verified:</strong> {% if profile.is_varified %}✅{% else %}❌{% endif %} </p>
+    <a href="{% url 'homepage' %}">back to home page</a>
+    <br>
+    <br>
+    {% if user.is_authenticated and user == profile.user %}
+        <a href="{% url 'accounts:profile_edit' profile.user.username %}">Edit Profile</a>
+    {% endif %}
+
+    <br>
+    <br>
+    <a href="{% url 'accounts:profile' profile.user.username %}" 
+   id="profile-link" target="_blank">
+   share profile
+</a>
+
+<button type="button" onclick="copyProfileLink()"> 📋 </button>
+
+<script>
+    function copyProfileLink() {    
+        // build the absolute URL for the profile
+        const profileUrl = window.location.origin + "{% url 'accounts:profile' profile.user.username %}";
+        
+        // copy to clipboard
+        navigator.clipboard.writeText(profileUrl).then(function() {
+            alert("copied");
+        }).catch(function(err) {
+            console.error("Failed to copy: ", err);
+        });
+    }
+    // http://127.0.0.1:8000/accounts/profile/admin
+    </script>
+    
+
+</div>
+{% endblock %}
