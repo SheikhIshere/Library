@@ -21,8 +21,9 @@
                             </a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="{% url 'accounts:profile' user.username %}">Profile</a></li>
-                                <li><a class="dropdown-item" href="#">all books</a></li>
-                                <li><a class="dropdown-item" href="#">add book</a></li>
+                                <li><a class="dropdown-item" href="{% url 'books:book_list' %}">all books</a></li>
+                                <li><a class="dropdown-item" href="{% url 'books:add_book' %}">add book</a></li>
+                                <li><a class="dropdown-item" href="{% url 'books:add_tag' %}">add tag</a></li>
                                 <li><a class="dropdown-item" href="#">your books</a></li>
                                 <li><a class="dropdown-item" href="#">your borrow books</a></li>
                             </ul>

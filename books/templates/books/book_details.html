@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<h1>{{ book.title }}</h1>
+<p>Author: {{ book.author }}</p>
+<p>{{ book.description }}</p>
+<p>Visibility: {{ book.visibility }}</p>
+<p>
+    Price: 
+    {% if book.price == 0 %}
+        free
+    {% elif book.price > 1 %}
+        {{ book.price }} tokens
+    {% else %}
+        {{ book.price }} token
+    {% endif %}
+</p>
+
+
+<!-- Cover page -->
+{% if book.cover_page %}
+    <img src="{{ book.cover_page.url }}" alt="Cover" width="200">
+{% endif %}
+
+<!-- Download -->
+{% if book.book_file %}
+    <p><a href="{{ book.book_file.url }}">Download file </a></p>
+{% endif %}
+{% endblock %}

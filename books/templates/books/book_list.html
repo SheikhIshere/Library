@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Books List{% endblock %}
+
+{% block content %}
+<h1>Books</h1>
+<a href="{% url 'books:add_book' %}">Add New Book</a>
+<ul>
+    {% for book in books %}
+        <li>
+            <a href="{% url 'books:book_detail' book.slug %}">{{ book.title }}</a> by {{ book.author }}
+            ({{ book.total_favorites }} favorites, {{ book.total_ratings }} ratings)
+            
+            {% if book.cover_page %}
+                <img src="{{ book.cover_page.url }}" alt="Cover" width="200">
+            {% else %}
+                <p>No cover available</p>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li>No books available.</li>
+    {% endfor %}
+</ul>
+{% endblock %}
