@@ -1,20 +1,1113 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Home{% endblock title %}
+
+{% block title %}Home — Genu Library{% endblock %}
 
 {% block content %}
-    <h1>Home Page</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    {% if user.is_authenticated %}
-        <p>Hello, {{ user.username }}!</p>
-        <p><a href="{% url 'accounts:profile' user.username %}">Profile</a></p>
-        <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
+  <!-- include custom css (recommended: move this <link> to <head> in base.html for best performance) -->
+  <link rel="stylesheet" href="{% static 'css/genu-custom.css' %}">
+
+  <!-- HERO -->
+  <section class="relative isolate overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-indigo-700 to-violet-700 text-white p-6 md:p-10 lg:px-12 lg:py-14" aria-labelledby="hero-heading">
+
+    <!-- Decorative / grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+
+      <!-- Left content -->
+      <div class="space-y-6 md:space-y-8">
+        <h1 id="hero-heading" class="text-2xl sm:text-3xl lg:text-4xl font-extrabold leading-tight tracking-tight">
+          Welcome to <span class="inline-block bg-white/12 px-3 py-1 rounded-md text-white">Genu Library</span>
+        </h1>
+
+        <p class="text-sm sm:text-base text-indigo-100/95 max-w-xl">
+          Discover free & premium books, preview inline, leave thoughtful reviews, and build curated reading lists — all in one friendly place.
+        </p>
+
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <a href="{% url 'books:book_list' %}" class="inline-flex items-center gap-3 px-4 py-3 rounded-xl bg-white text-indigo-700 font-semibold shadow-md hover:translate-y-[-1px] transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-white/50">
+            Browse Books
+          </a>
+
+          {% if user.is_authenticated %}
+            <a href="{% url 'books:add_book' %}" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-indigo-200/20 text-white font-medium border border-white/10 hover:bg-indigo-200/25 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
+              Add a Book
+            </a>
+          {% else %}
+            <a href="{% url 'accounts:signup' %}" class="inline-flex items-center gap-2 px-4 py-3 rounded-xl bg-indigo-200/20 text-white font-medium border border-white/10 hover:bg-indigo-200/25 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-white/30">
+              Create an account
+            </a>
+          {% endif %}
+        </div>
+
+        <!-- HERO SEARCH - keep JSON script here for JS to read -->
+        <form action="{% url 'books:book_list' %}" method="get" role="search" aria-label="Search books" class="mt-3">
+          <label for="hero-search" class="sr-only">Search books</label>
+
+          <div class="relative max-w-xl">
+            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+              <svg class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+
+            <input id="hero-search" name="q" list="suggestions" type="search" autocomplete="off"
+                   placeholder="Search title, author, or tag..."
+                   value="{{ request.GET.q|default:'' }}"
+                   aria-autocomplete="list"
+                   aria-controls="hero-suggestions"
+                   aria-expanded="false"
+                   class="w-full rounded-full pl-12 pr-36 py-3 text-sm text-slate-900 placeholder:text-slate-500 bg-white/95 border border-slate-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-300 transition" />
+
+            <datalist id="suggestions">
+              {% if search_suggestions %}
+                {% for s in search_suggestions %}
+                  <option value="{{ s }}">{{ s }}</option>
+                {% endfor %}
+              {% endif %}
+            </datalist>
+
+            <div class="absolute inset-y-0 right-0 flex items-center gap-2 pr-1">
+              <button type="button" id="hero-clear" class="hidden items-center justify-center rounded-full px-3 py-2 text-sm bg-white/80 text-slate-700 hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">✕</button>
+              <button type="submit" class="inline-flex items-center gap-2 ml-1 px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow-md hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Search
+              </button>
+            </div>
+
+            <div id="hero-suggestions" role="listbox" class="absolute left-0 right-0 mt-3 z-50 hidden max-h-56 overflow-auto rounded-lg bg-white shadow-xl border border-slate-200 dark:bg-slate-900 dark:border-slate-700"></div>
+          </div>
+
+          <!-- pass suggestions to JS (keep above script includes) -->
+          {% if search_suggestions %}
+            {{ search_suggestions|json_script:"search_suggestions" }}
+          {% endif %}
+
+          <!-- filter chips -->
+          <div class="mt-3 flex flex-wrap gap-2">
+            {% if trending_tags %}
+              {% for tag in trending_tags %}
+                <a href="{% url 'books:book_list' %}?tag={{ tag.name }}" class="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 transition">
+                  #{{ tag.name }}
+                </a>
+              {% endfor %}
+            {% endif %}
+          </div>
         </form>
-    {% else %}
-        <p>You are not logged in.</p>
-        <a href="{% url 'accounts:signin' %}">Sign In</a> |
-        <a href="{% url 'accounts:signup' %}">Sign Up</a>
-    {% endif %}
-{% endblock content %}
+
+        <!-- optional stats row (cards) -->
+        {% if total_books or total_users or total_reviews %}
+          <div class="mt-4 flex flex-wrap items-center gap-3" role="list" aria-label="Site statistics">
+            {% if total_books %}
+              <div role="listitem" class="min-w-[12rem] flex items-center gap-4 rounded-xl bg-white/8 backdrop-blur-sm border border-white/10 px-4 py-2 shadow-sm">
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-amber-400 to-yellow-300 text-white flex-shrink-0" aria-hidden="true">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M3 6.5C3 5.12 4.12 4 5.5 4h11c1.38 0 2.5 1.12 2.5 2.5V19" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M21 6h-9c-1.38 0-2.5 1.12-2.5 2.5V20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-white/90 font-medium truncate">Books</div>
+                  <div class="mt-0.5 flex items-baseline gap-2">
+                    <div class="text-lg font-bold text-white leading-none" aria-live="polite" aria-atomic="true">
+                      <span class="stat-value" data-target="{{ total_books|default:0 }}">0</span>
+                    </div>
+                    <div class="text-xs text-white/70">available</div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if total_users %}
+              <div role="listitem" class="min-w-[12rem] flex items-center gap-4 rounded-xl bg-white/6 backdrop-blur-sm border border-white/10 px-4 py-2 shadow-sm">
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 text-white flex-shrink-0" aria-hidden="true">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M17 21v-2a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="9.5" cy="7" r="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M20 8v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-white/90 font-medium truncate">Members</div>
+                  <div class="mt-0.5 flex items-baseline gap-2">
+                    <div class="text-lg font-bold text-white leading-none" aria-live="polite" aria-atomic="true">
+                      <span class="stat-value" data-target="{{ total_users|default:0 }}">0</span>
+                    </div>
+                    <div class="text-xs text-white/70">community</div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+
+            {% if total_reviews %}
+              <div role="listitem" class="min-w-[12rem] flex items-center gap-4 rounded-xl bg-white/6 backdrop-blur-sm border border-white/10 px-4 py-2 shadow-sm">
+                <div class="inline-flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-400 to-emerald-500 text-white flex-shrink-0" aria-hidden="true">
+                  <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M12 17.3l6.18 3.9-1.64-7.03L21 9.24l-7.19-.62L12 2 10.19 8.62 3 9.24l4.46 4.93L5.82 21z" fill="currentColor"/>
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm text-white/90 font-medium truncate">Reviews</div>
+                  <div class="mt-0.5 flex items-baseline gap-2">
+                    <div class="text-lg font-bold text-white leading-none" aria-live="polite" aria-atomic="true">
+                      <span class="stat-value" data-target="{{ total_reviews|default:0 }}">0</span>
+                    </div>
+                    <div class="text-xs text-white/70">and counting</div>
+                  </div>
+                </div>
+              </div>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Right image (visible on lg+) -->
+      {# RIGHT-SIDE HERO (remote Unsplash image, single-file approach) #}
+<div class="hidden lg:flex justify-end items-center" aria-hidden="true">
+  <div class="relative w-full max-w-lg">
+
+    <!-- image card (rounded + shadow) -->
+    <div class="rounded-xl overflow-hidden shadow-2xl transform-gpu transition-transform will-change-transform hover:scale-[1.02]">
+      <picture>
+        <!-- WebP (Unsplash serves modern formats) -->
+        <source
+          type="image/webp"
+          srcset="
+            https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=800&auto=format&fit=crop 800w,
+            https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=1400&auto=format&fit=crop 1400w"
+          sizes="(min-width:1024px) 600px, (min-width:640px) 480px, 100vw">
+
+        <!-- JPEG fallback -->
+        <source
+          type="image/jpeg"
+          srcset="
+            https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=800&auto=format&fit=crop 800w,
+            https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=1400&auto=format&fit=crop 1400w"
+          sizes="(min-width:1024px) 600px, (min-width:640px) 480px, 100vw">
+
+        <!-- final fallback (keeps layout stable) -->
+        <img
+          src="https://images.unsplash.com/photo-1529070538774-1843cb3265df?q=80&w=1400&auto=format&fit=crop"
+          alt="Person reading in a cozy reading nook with warm light and blurred library shelves"
+          width="1400" height="900"
+          class="w-full h-auto object-cover block"
+          loading="lazy" decoding="async" fetchpriority="low">
+      </picture>
+    </div>    
+  </div>
+</div>
+
+
+    </div> <!-- end main grid -->
+  </section>
+
+  <!-- FEATURED CAROUSEL -->
+  <section class="mt-8" aria-labelledby="featured-heading">
+    <!-- header -->
+    <div class="flex items-center justify-between mb-3">
+      <!-- Featured heading: icon + title + small subtitle + count on right -->
+<div class="flex items-center gap-4 w-full">
+  <!-- left: icon + title -->
+  <div class="flex items-center gap-3">
+    <!-- icon chip -->
+    <span class="flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 text-white shadow-md ring-1 ring-indigo-50 dark:ring-black/20">
+      <i class="fas fa-star fa-sm" aria-hidden="true"></i>
+    </span>
+
+    <!-- text -->
+    <div class="leading-tight">
+      <h2 id="featured-heading" class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+        Featured picks
+      </h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+        Editor’s favorites & community highlights
+      </p>
+    </div>
+  </div>
+
+  <!-- right: optional small meta (count) -->
+  <div class="ml-auto flex items-center gap-2">
+    <span class="text-sm text-slate-500 dark:text-slate-400 hidden sm:inline">Showing</span>
+    <span class="inline-flex items-center px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded-full text-xs font-semibold text-slate-900 dark:text-slate-100 shadow-sm mr-3">
+      {{ featured_books|length }} items
+    </span>
+  </div>
+</div>
+
+  
+      <!-- controls: keep IDs for your JS -->
+      <!-- hidden on phones, visible from sm+ (keeps IDs for your JS) -->
+<div class="hidden sm:flex items-center gap-2 featured-controls">
+  <!-- Prev -->
+  <button id="feat-prev"
+          type="button"
+          aria-controls="featured-list"
+          class="control-btn inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/95 dark:bg-slate-800/85 text-slate-900 dark:text-slate-100 shadow-md border border-slate-200 dark:border-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          aria-label="Previous featured" title="Previous">
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Next -->
+  <button id="feat-next"
+          type="button"
+          aria-controls="featured-list"
+          class="control-btn inline-flex items-center justify-center h-10 w-10 rounded-lg bg-white/95 dark:bg-slate-800/85 text-slate-900 dark:text-slate-100 shadow-md border border-slate-200 dark:border-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          aria-label="Next featured" title="Next">
+    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+</div>
+
+      
+    </div>
+  
+    <!-- carousel container (keeps same id for JS) -->
+    <div id="featured-wrap" class="relative" data-autoplay="true" role="region" aria-roledescription="carousel" aria-label="Featured books">
+      {% if featured_books %}
+  <!-- scrollable list (same id for JS) -->
+  <div id="featured-list"
+       class="flex gap-4 overflow-x-auto snap-x snap-mandatory py-3 -mx-2 px-2 scroll-smooth"
+       role="list" tabindex="0" aria-label="Featured items">
+
+       {% for b in featured_books %}
+       <article
+         data-href="{% url 'books:book_detail' b.slug %}"
+         role="link"
+         tabindex="0"
+         aria-label="{{ b.title }} by {{ b.author }}"
+         class="snap-start flex-shrink-0 w-64 sm:w-56 md:w-64 transform-gpu transition-transform will-change-transform
+                rounded-xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 cursor-pointer">
+     
+         <!-- CARD SURFACE (keeps your styles) -->
+         <div class="bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 shadow-md rounded-xl overflow-hidden">
+     
+           <!-- COVER -->
+           <div class="relative h-40 md:h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
+             {% if b.cover_page %}
+               <img src="{{ b.cover_page.url }}"
+                    alt="{{ b.title }}"
+                    class="w-full h-full object-cover"
+                    loading="lazy" decoding="async">
+             {% else %}
+               <div class="w-full h-full flex items-center justify-center text-slate-400">No cover</div>
+             {% endif %}
+     
+             <!-- price badge (top-right) -->
+             <div class="absolute top-3 right-3">
+               {% if b.price == 0 %}
+                 <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">Free</span>
+               {% else %}
+                 <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">{{ b.price }} token</span>
+               {% endif %}
+             </div>
+     
+             <!-- subtle overlay -->
+             <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-black/3 dark:to-black/6"></div>
+           </div>
+     
+           <!-- META (clear readable area) -->
+           <div class="p-3 bg-transparent">
+             <!-- keep an actual <a> on the title only for semantics & screen readers -->
+             <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
+               <a href="{% url 'books:book_detail' b.slug %}" class="hover:underline">{{ b.title }}</a>
+             </h3>
+     
+             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ b.author }}</p>
+     
+             <div class="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+               <div class="flex items-center gap-2" aria-hidden="true">
+                 <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full">
+                   <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 17.3l6.18 3.9-1.64-7.03L21 9.24l-7.19-.62L12 2 10.19 8.62 3 9.24l4.46 4.93L5.82 21z" fill="currentColor"/></svg>
+                   <span>{{ b.average_rating|default:"—"|floatformat:1 }}</span>
+                   <span class="text-slate-400">({{ b.total_ratings }})</span>
+                 </span>
+               </div>
+     
+               <div class="inline-flex items-center gap-2">
+                 <span class="text-slate-400 text-xs" aria-hidden="true">♥</span>
+                 <span class="text-xs text-slate-400">{{ b.total_favorites }}</span>
+                 <span class="sr-only">{{ b.total_favorites }} favorites</span>
+               </div>
+             </div>
+           </div>
+         </div>
+     
+       </article>
+     {% endfor %}
+     
+  </div>
+
+  <!-- indicators (same id for JS) -->
+  <div id="featured-indicators" class="mt-3 flex items-center gap-2 justify-center" role="tablist" aria-label="Featured indicators">
+    {% for b in featured_books %}
+      <button type="button"
+              class="featured-indicator w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600"
+              data-index="{{ forloop.counter0 }}"
+              aria-label="Go to featured {{ forloop.counter }}"
+              aria-pressed="false" role="tab"></button>
+    {% endfor %}
+  </div>
+
+{% else %}
+  <div class="rounded-xl bg-white dark:bg-slate-900 p-6 shadow text-center">No featured books yet.</div>
+{% endif %}
+
+    </div>
+  </section>
+  
+  <!-- RECENT BOOKS GRID -->
+  <section class="mt-8">
+    <!-- Recent header — improved UI/UX (Tailwind only) -->
+<div class="flex items-start justify-between mb-4 gap-4">
+  <!-- Left: icon + title + subtitle -->
+  <div class="flex items-start gap-4">
+    <!-- icon chip -->
+    <span class="flex-none inline-flex items-center justify-center w-10 h-10 rounded-lg bg-indigo-600 text-white shadow-md ring-1 ring-indigo-200/20">
+      <!-- book/clock icon (SVG, decorative) -->
+      <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M21 17v1a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M8 10h8M8 14h5" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </span>
+
+    <!-- title + small subtitle -->
+    <div class="min-w-0">
+      <h2 id="recent-heading" class="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight">
+        Recent additions
+        <span class="ml-2 align-middle inline-flex items-center px-2 py-0.5 text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-full shadow-sm">
+          {{ recent_books|length }} new
+        </span>
+      </h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">
+        Fresh uploads from creators and the community
+      </p>
+    </div>
+  </div>
+
+  <!-- Right: actions -->
+  <!-- Controls: hidden on small screens to avoid overflow, visible on sm+ -->
+<div class="flex items-center gap-2">
+<!-- Controls: hidden on phones, visible on sm+ (keeps IDs for existing JS) -->
+<div class="flex items-center gap-3">
+  <!-- Prev (hidden on small screens) -->
+  <!-- Prev -->
+<button id="feat-prev"
+type="button"
+aria-controls="featured-list"
+title="Previous featured"
+aria-label="Previous featured"
+class="hidden sm:inline-flex control-btn items-center justify-center h-10 w-10 rounded-lg
+       bg-white/95 text-slate-900 border border-slate-200 shadow-md hover:scale-105 hover:bg-white
+       dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700
+       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 relative z-0">
+<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+<path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</button>
+
+<!-- Next -->
+<button id="feat-next"
+type="button"
+aria-controls="featured-list"
+title="Next featured"
+aria-label="Next featured"
+class="hidden sm:inline-flex control-btn items-center justify-center h-10 w-10 rounded-lg
+       bg-white/95 text-slate-900 border border-slate-200 shadow-md hover:scale-105 hover:bg-white
+       dark:bg-slate-800 dark:text-slate-100 dark:border-slate-700 dark:hover:bg-slate-700
+       focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 relative z-0">
+<svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+<path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2.25" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+</button>
+
+</div>
+
+</div>
+
+  
+</div>
+
+
+{% if recent_books %}
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+  {% for book in recent_books %}
+  <article
+    data-href="{% url 'books:book_detail' book.slug %}"
+    tabindex="0"
+    role="link"
+    aria-label="{{ book.title }} by {{ book.author }}"
+    class="relative rounded-2xl overflow-hidden transform-gpu transition will-change-transform
+           bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 shadow-md
+           hover:-translate-y-1 hover:shadow-2xl focus-within:ring-2 focus-within:ring-indigo-400 cursor-pointer">
+
+    <!-- IMAGE / CARD TOP -->
+    <div class="relative h-48 bg-slate-100 dark:bg-slate-800 overflow-hidden">
+      {% if book.cover_page %}
+        <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async">
+      {% else %}
+        <div class="w-full h-full flex items-center justify-center text-slate-400">No cover</div>
+      {% endif %}
+
+      <div class="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent to-black/4 dark:to-black/6"></div>
+
+      <div class="absolute top-3 left-3 pointer-events-auto">
+        {% if book.price == 0 %}
+          <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">Free</span>
+        {% else %}
+          <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">{{ book.price }} token</span>
+        {% endif %}
+      </div>
+
+      <!-- hover actions (Preview / Favorite) — use button for Preview to avoid nested <a> -->
+      <div class="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+        <div class="flex items-center gap-2 pointer-events-auto">
+          <!-- Preview button (navigates via JS) -->
+          <button type="button" data-href="{% url 'books:book_detail' book.slug %}" class="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 bg-white/95 dark:bg-slate-800/90 rounded-md shadow-sm hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+            Preview
+            <svg class="w-4 h-4 text-indigo-600" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+
+          <!-- favorite button -->
+          <button type="button" data-slug="{{ book.slug }}" class="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/95 dark:bg-slate-800/90 shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400" aria-label="Favorite {{ book.title }}">
+            <svg class="w-4 h-4 text-rose-500" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21s-7-4.5-9-7a6.5 6.5 0 1 1 11.98-4.99L12 21z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- META / BODY -->
+    <div class="p-4">
+      <!-- Keep a real link for screen readers and fallback on title -->
+      <h3 id="book-{{ book.pk }}" class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">
+        <a href="{% url 'books:book_detail' book.slug %}" class="hover:underline">{{ book.title }}</a>
+      </h3>
+
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ book.author }}</p>
+
+      {% if book.description %}
+      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 line-clamp-3">{{ book.description|truncatechars:120 }}</p>
+      {% endif %}
+
+      <div class="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <div class="inline-flex items-center gap-3">
+          <span class="inline-flex items-center gap-1 bg-amber-50 text-amber-700 text-xs px-2 py-0.5 rounded-full">
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3l6.18 3.9-1.64-7.03L21 9.24l-7.19-.62L12 2 10.19 8.62 3 9.24l4.46 4.93L5.82 21z"/></svg>
+            <span>{{ book.average_rating|default:"—"|floatformat:1 }}</span>
+            <span class="text-slate-400">({{ book.total_ratings }})</span>
+          </span>
+
+          <span class="text-slate-400 text-xs" aria-hidden="true">♥ {{ book.total_favorites }}</span>
+        </div>
+
+        <div class="text-xs text-slate-400">
+          {{ book.upload_date|date:"M j" }}
+        </div>
+      </div>
+    </div>
+  </article>
+{% endfor %}
+
+</div>
+
+{% else %}
+<div class="rounded-xl bg-white dark:bg-slate-900 p-6 shadow text-center">
+  <p class="text-sm text-slate-600 dark:text-slate-300">No recent books yet — be the first to <a href="{% url 'books:add_book' %}" class="text-indigo-600 hover:underline">add one</a>.</p>
+</div>
+{% endif %}
+
+  </section>
+
+  <!-- CTA / FOOTER BANNER -->
+  <section
+  class="mt-12 rounded-2xl p-6 md:p-8 bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-900 shadow-lg ring-1 ring-slate-100/60 dark:ring-0"
+  role="region" aria-labelledby="cta-heading">
+
+  <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
+    <!-- Left: Heading + support copy -->
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-4">
+        <span class="inline-flex items-center justify-center w-11 h-11 rounded-lg bg-indigo-600 text-white shadow-md flex-shrink-0">
+          <!-- upload/book icon -->
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 3v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M21 15V6a2 2 0 0 0-2-2H7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 19a2 2 0 0 0 2 2h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </span>
+
+        <div class="min-w-0">
+          <h3 id="cta-heading" class="text-lg font-semibold text-slate-900 dark:text-slate-100 leading-tight">
+            Have a great book to share?
+          </h3>
+          <p class="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Upload your PDF to reach readers — fast review, flexible pricing, and analytics for your work.
+          </p>
+        </div>
+      </div>
+
+      <!-- Benefit bullets -->
+      <ul class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-600 dark:text-slate-400">
+        <li class="flex items-start gap-2">
+          <span class="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-md bg-emerald-50 text-emerald-700">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span>Free / paid options</span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-md bg-indigo-50 text-indigo-700">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span>Quick uploads & previews</span>
+        </li>
+
+        <li class="flex items-start gap-2">
+          <span class="mt-0.5 inline-flex items-center justify-center w-7 h-7 rounded-md bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7h18M3 12h18M3 17h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+          <span>Manage pricing & visibility</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Right: Actions -->
+    <div class="flex-shrink-0 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+      {% if user.is_authenticated %}
+        <a href="{% url 'books:add_book' %}"
+           class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+           title="Upload a new book">
+          <!-- plus icon -->
+          <svg class="w-4 h-4 -ml-1" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Add your book
+        </a>
+
+        <a href="{% url 'books:book_list' %}#pricing" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-white/90 text-indigo-600 font-medium border border-slate-100 shadow-sm hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+          Learn how
+        </a>
+      {% else %}
+        <a href="{% url 'accounts:signup' %}"
+           class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-indigo-600 text-white font-semibold shadow-md hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+           title="Create account">
+          Create account
+        </a>
+
+        <a href="{% url 'accounts:signin' %}"
+           class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-transparent text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+          Sign in
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+
+</div>
+
+<!-- include style -->
+
+<style>
+  /* genu-custom.css - tiny utilities & animations for Genu Library */
+/* ============================
+   ORIGINAL CSS (kept unchanged)
+   ============================ */
+
+/* gentle float animation used on hero accents */
+@keyframes animateSlow {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+.animate-animateSlow { animation: animateSlow 6s ease-in-out infinite; }
+
+/* small dragging cursor helper for carousel */
+#featured-list.dragging { cursor: grabbing; cursor: -webkit-grabbing; }
+
+/* subtle elevated card hover */
+.genu-card-hover { transition: transform .22s cubic-bezier(.2,.9,.2,1), box-shadow .22s; }
+.genu-card-hover:hover { transform: translateY(-4px); box-shadow: 0 18px 30px rgba(15,23,42,.12); }
+
+/* small utility: visible only when JS shows it */
+.js-show { display: inline-flex !important; }
+
+/* small focus ring fallback */
+.genu-focus-ring:focus { outline: none; box-shadow: 0 0 0 4px rgba(99,102,241, .12); border-radius: 0.5rem; }
+
+/* modest responsive improvements for carousel spacing */
+@media (max-width: 640px) {
+  #featured-list { gap: 12px; }
+}
+
+/* ============================
+   ADDITIONS / POLISH (non-destructive)
+   ============================ */
+
+/* Keep cards accessible: show subtle lift on keyboard focus as well */
+.genu-card-hover:focus,
+.genu-card-hover:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(2,6,23,.12);
+  outline: none;
+}
+
+/* Featured carousel control button polish — visible on hover/focus */
+.featured-controls .control-btn {
+  opacity: 0.72;
+  transition: opacity .18s, transform .18s;
+}
+.featured-controls .control-btn:hover,
+.featured-controls .control-btn:focus {
+  opacity: 1;
+  transform: translateY(-1px);
+  outline: none;
+}
+
+/* Indicators (dots) — friendly hit target and keyboard focus */
+.featured-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: transform .12s, background-color .12s;
+  background: #cbd5e1; /* slate-300 fallback */
+}
+.featured-indicator:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.12);
+  transform: scale(1.1);
+}
+
+/* Active indicator — use aria-pressed="true" or toggle class in JS */
+.featured-indicator[aria-pressed="true"] {
+  background-color: rgb(79 70 229); /* indigo-600 */
+}
+
+/* Small overlay on images to improve readability on top of photos */
+.featured-img-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.06));
+}
+
+/* Meta pill used for rating display */
+.meta-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: .375rem;
+  padding: .25rem .5rem;
+  border-radius: 999px;
+  font-size: .75rem;
+  background: rgba(255,255,255,0.9);
+}
+
+/* Price badge positioning */
+.price-badge {
+  position: absolute;
+  top: .5rem;
+  right: .5rem;
+  z-index: 10;
+  font-weight: 600;
+}
+
+/* Make the scroll list focus-friendly */
+#featured-list:focus {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(99,102,241,.06);
+  border-radius: .5rem;
+}
+
+/* Hero image card helper (optional utility, use class .hero-image-card on wrapper) */
+.hero-image-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,255,255,0.92));
+  border-radius: 12px;
+  padding: 0;
+  box-shadow: 0 20px 40px rgba(2,6,23,0.16);
+}
+
+/* tiny helper to slightly enlarge the active featured item on hover (non-intrusive) */
+#featured-list .snap-start:hover {
+  transform: translateY(-4px);
+  transition: transform .18s ease;
+}
+
+/* Accessibility: ensure buttons and interactive elements have pointer cursor */
+button, [role="button"], .featured-indicator {
+  cursor: pointer;
+}
+
+/* Small responsive tweak for larger screens: slightly larger indicator */
+@media (min-width: 1024px) {
+  .featured-indicator { width: 12px; height: 12px; }
+}
+
+/* Preserve any existing tailwind output ordering — these classes are additive only */
+
+</style>
+
+<!-- include whole js-->
+
+<script>
+  (function () {
+    function onReady(fn) {
+      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', fn);
+      else fn();
+    }
+  
+    onReady(function () {
+  
+      /* FLASH MESSAGES (3s + close) */
+      (function flashMessages() {
+        const container = document.getElementById('django-messages');
+        if (!container) return;
+        function removeEl(el) {
+          if (!el) return;
+          el.style.transition = 'opacity .18s ease, transform .18s ease';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-6px)';
+          setTimeout(() => { if (el && el.parentNode) el.parentNode.removeChild(el); }, 180);
+        }
+        container.querySelectorAll('.close-msg').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const el = e.target.closest('.rounded-lg, [role="alert"], .message') || e.target.closest('.rounded-lg');
+            removeEl(el);
+          });
+        });
+        Array.from(container.children).forEach((msgEl) => {
+          if (!msgEl || msgEl.dataset.noAutodismiss === "true") return;
+          let t = setTimeout(() => removeEl(msgEl), 3000);
+          msgEl.addEventListener('mouseenter', () => { clearTimeout(t); });
+          msgEl.addEventListener('mouseleave', () => { t = setTimeout(() => removeEl(msgEl), 3000); });
+        });
+      })();
+  
+  
+      /* HERO SEARCH (local suggestions) */
+      (function heroSearch() {
+        const input = document.getElementById('hero-search');
+        const suggestionsEl = document.getElementById('hero-suggestions');
+        const clearBtn = document.getElementById('hero-clear');
+        if (!input || !suggestionsEl) return;
+  
+        const jsonScript = document.getElementById('search_suggestions');
+        const suggestions = jsonScript ? (JSON.parse(jsonScript.textContent || '[]') || []) : [];
+  
+        function renderSuggestions(filtered, activeIndex = -1) {
+          if (!filtered || filtered.length === 0) {
+            suggestionsEl.classList.add('hidden');
+            input.setAttribute('aria-expanded', 'false');
+            suggestionsEl.innerHTML = '';
+            return;
+          }
+          suggestionsEl.innerHTML = filtered.map((s, i) => {
+            const cls = i === activeIndex ? 'bg-indigo-50 dark:bg-slate-800' : 'hover:bg-slate-50 dark:hover:bg-slate-800';
+            const safe = String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            return `<div role="option" data-value="${safe}" class="cursor-pointer px-4 py-3 text-sm text-slate-800 dark:text-slate-100 ${cls}">${safe}</div>`;
+          }).join('');
+          suggestionsEl.classList.remove('hidden');
+          input.setAttribute('aria-expanded', 'true');
+        }
+  
+        function getFiltered(q) {
+          if (!suggestions || !suggestions.length) return [];
+          if (!q) return suggestions.slice(0, 8);
+          const lower = String(q).toLowerCase();
+          return suggestions.filter(s => String(s).toLowerCase().includes(lower)).slice(0, 8);
+        }
+  
+        function toggleClear() {
+          if (!clearBtn) return;
+          if (input.value.trim()) clearBtn.classList.remove('hidden'); else clearBtn.classList.add('hidden');
+        }
+  
+        toggleClear();
+  
+        input.addEventListener('input', (e) => {
+          toggleClear();
+          const filtered = getFiltered(e.target.value || '');
+          renderSuggestions(filtered);
+        });
+  
+        input.addEventListener('focus', () => {
+          const filtered = getFiltered(input.value || '');
+          if (filtered.length) renderSuggestions(filtered);
+        });
+  
+        input.addEventListener('blur', () => {
+          setTimeout(() => {
+            suggestionsEl.classList.add('hidden');
+            input.setAttribute('aria-expanded', 'false');
+          }, 150);
+        });
+  
+        let activeIndex = -1;
+        input.addEventListener('keydown', (e) => {
+          const items = suggestionsEl.querySelectorAll('[role="option"]');
+          if (!items.length) return;
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, items.length - 1);
+            items.forEach((it, idx) => it.classList.toggle('bg-indigo-50', idx === activeIndex));
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+          } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+            items.forEach((it, idx) => it.classList.toggle('bg-indigo-50', idx === activeIndex));
+            items[activeIndex].scrollIntoView({ block: 'nearest' });
+          } else if (e.key === 'Enter') {
+            if (activeIndex >= 0 && items[activeIndex]) {
+              e.preventDefault();
+              input.value = items[activeIndex].dataset.value;
+              suggestionsEl.classList.add('hidden');
+              if (input.form) input.form.submit();
+            }
+          } else if (e.key === 'Escape') {
+            suggestionsEl.classList.add('hidden');
+          }
+        });
+  
+        suggestionsEl.addEventListener('click', (ev) => {
+          const btn = ev.target.closest('[data-value]');
+          if (!btn) return;
+          input.value = btn.dataset.value;
+          suggestionsEl.classList.add('hidden');
+          if (input.form) input.form.submit();
+        });
+  
+        if (clearBtn) {
+          clearBtn.addEventListener('click', () => {
+            input.value = '';
+            toggleClear();
+            input.focus();
+            suggestionsEl.classList.add('hidden');
+          });
+        }
+      })();
+  
+  
+      /* STATS COUNTER */
+      (function statsCounter() {
+        const els = Array.from(document.querySelectorAll('.stat-value'));
+        if (!els.length) return;
+        const duration = 900;
+        els.forEach(el => {
+          const target = Number(el.getAttribute('data-target')) || 0;
+          if (target <= 0) { el.textContent = target.toLocaleString(); return; }
+          let start = null;
+          const startVal = 0;
+          function step(ts) {
+            if (!start) start = ts;
+            const progress = Math.min((ts - start) / duration, 1);
+            const current = Math.floor(progress * (target - startVal) + startVal);
+            el.textContent = current.toLocaleString();
+            if (progress < 1) requestAnimationFrame(step);
+            else el.textContent = target.toLocaleString();
+          }
+          requestAnimationFrame(step);
+        });
+      })();
+  
+  
+      /* FEATURED CAROUSEL (keeps behavior) */
+      (function featuredCarousel() {
+        const wrap = document.getElementById('featured-wrap');
+        const list = document.getElementById('featured-list');
+        const indicators = document.getElementById('featured-indicators');
+        if (!list) return;
+  
+        const items = Array.from(list.querySelectorAll('article, [role="listitem"], [data-href]')).filter(el => el.closest('#featured-list') === list);
+        const autoplay = wrap && wrap.dataset.autoplay === 'true';
+        const gap = parseInt(getComputedStyle(list).gap || 16, 10) || 16;
+        let itemWidth = (items[0] ? items[0].getBoundingClientRect().width : 300) + gap;
+  
+        function setActive(index) {
+          if (!indicators) return;
+          Array.from(indicators.children).forEach((btn, i) => {
+            btn.classList.toggle('bg-indigo-600', i === index);
+            btn.classList.toggle('bg-slate-300', i !== index);
+            btn.setAttribute('aria-pressed', String(i === index));
+          });
+        }
+  
+        function computeActiveIndex() {
+          const center = list.scrollLeft + (list.clientWidth / 2);
+          let active = 0;
+          for (let i = 0; i < items.length; i++) {
+            const el = items[i];
+            const start = el.offsetLeft;
+            const end = start + el.offsetWidth;
+            if (center >= start && center <= end) { active = i; break; }
+          }
+          return active;
+        }
+  
+        function scrollToIndex(i) {
+          if (!items.length) return;
+          i = Math.max(0, Math.min(items.length - 1, i));
+          list.scrollTo({ left: items[i].offsetLeft - 8, behavior: 'smooth' });
+          setActive(i);
+        }
+  
+        // Use buttons by aria-controls (robust); works even if multiple buttons exist
+        const prevButtons = Array.from(document.querySelectorAll('button[aria-controls="featured-list"][aria-label*="Previous"], button[aria-controls="featured-list"][title*="Previous"], button[aria-controls="featured-list"].control-btn'));
+        const nextButtons = Array.from(document.querySelectorAll('button[aria-controls="featured-list"][aria-label*="Next"], button[aria-controls="featured-list"][title*="Next"], button[aria-controls="featured-list"].control-btn'));
+  
+        prevButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cur = computeActiveIndex();
+            scrollToIndex(Math.max(0, cur - 1));
+          });
+        });
+        nextButtons.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const cur = computeActiveIndex();
+            scrollToIndex(Math.min(items.length - 1, cur + 1));
+          });
+        });
+  
+        indicators?.addEventListener('click', (e) => {
+          const btn = e.target.closest('button[data-index]');
+          if (!btn) return;
+          const idx = Number(btn.dataset.index);
+          scrollToIndex(idx);
+        });
+  
+        list.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowRight') { e.preventDefault(); list.scrollBy({ left: itemWidth, behavior: 'smooth' }); }
+          if (e.key === 'ArrowLeft') { e.preventDefault(); list.scrollBy({ left: -itemWidth, behavior: 'smooth' }); }
+        });
+  
+        let raf = null;
+        list.addEventListener('scroll', () => {
+          if (raf) cancelAnimationFrame(raf);
+          raf = requestAnimationFrame(() => setActive(computeActiveIndex()));
+        });
+  
+        (function addDrag() {
+          let isDown = false, startX = 0, scrollLeft = 0;
+          list.addEventListener('pointerdown', (e) => {
+            isDown = true;
+            try { list.setPointerCapture(e.pointerId); } catch (e) {}
+            startX = e.clientX;
+            scrollLeft = list.scrollLeft;
+            list.classList.add('dragging');
+          }, { passive: true });
+          list.addEventListener('pointermove', (e) => {
+            if (!isDown) return;
+            const dx = e.clientX - startX;
+            list.scrollLeft = scrollLeft - dx;
+          }, { passive: true });
+          ['pointerup','pointercancel','pointerleave'].forEach(evt => {
+            list.addEventListener(evt, (e) => {
+              isDown = false;
+              try { list.releasePointerCapture && list.releasePointerCapture(e.pointerId); } catch (e) {}
+              list.classList.remove('dragging');
+            });
+          });
+        })();
+  
+        let interval = null;
+        function startAutoplay() {
+          if (!autoplay || interval || items.length <= 1) return;
+          interval = setInterval(() => {
+            const cur = computeActiveIndex();
+            const nextIdx = (cur + 1) % items.length;
+            scrollToIndex(nextIdx);
+          }, 3500);
+        }
+        function stopAutoplay() { if (interval) { clearInterval(interval); interval = null; } }
+  
+        wrap?.addEventListener('mouseenter', stopAutoplay);
+        wrap?.addEventListener('focusin', stopAutoplay);
+        wrap?.addEventListener('mouseleave', startAutoplay);
+        wrap?.addEventListener('focusout', startAutoplay);
+  
+        window.addEventListener('resize', () => { itemWidth = (items[0] ? items[0].getBoundingClientRect().width : 300) + gap; });
+  
+        setTimeout(() => setActive(computeActiveIndex()), 120);
+        if (autoplay) startAutoplay();
+        if (indicators) Array.from(indicators.children).forEach(btn => btn.setAttribute('tabindex', '0'));
+      })();
+  
+  
+      /* CLICKABLE CARDS (robust) */
+      (function clickableCards() {
+        function isInsideInteractive(el) {
+          return !!el.closest('a, button, input, textarea, select, [role="button"], [role="link"], summary');
+        }
+        const cards = Array.from(document.querySelectorAll('article[data-href], [data-href].card, .card[data-href]')).filter(c => c);
+        cards.forEach(card => {
+          let pointerDown = false;
+          let startX = 0, startY = 0;
+          let moved = false;
+          const MOVE_THRESHOLD = 8;
+  
+          card.addEventListener('pointerdown', (ev) => {
+            if (ev.pointerType === 'mouse' && ev.button !== 0) return;
+            pointerDown = true;
+            moved = false;
+            startX = ev.clientX || ev.pageX || 0;
+            startY = ev.clientY || ev.pageY || 0;
+            try { card.setPointerCapture && card.setPointerCapture(ev.pointerId); } catch (e) {}
+          }, { passive: true });
+  
+          card.addEventListener('pointermove', (ev) => {
+            if (!pointerDown) return;
+            const dx = (ev.clientX || ev.pageX || 0) - startX;
+            const dy = (ev.clientY || ev.pageY || 0) - startY;
+            if (Math.hypot(dx, dy) > MOVE_THRESHOLD) moved = true;
+          }, { passive: true });
+  
+          function maybeNavigate(ev) {
+            if (moved) return;
+            if (isInsideInteractive(ev.target)) return;
+            const href = card.getAttribute('data-href');
+            if (href) window.location.href = href;
+          }
+  
+          card.addEventListener('pointerup', (ev) => {
+            pointerDown = false;
+            try { card.releasePointerCapture && card.releasePointerCapture(ev.pointerId); } catch (e) {}
+            maybeNavigate(ev);
+          });
+  
+          card.addEventListener('click', (ev) => {
+            if (ev.defaultPrevented) return;
+            maybeNavigate(ev);
+          });
+  
+          card.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter' || ev.key === ' ') {
+              if (isInsideInteractive(document.activeElement)) return;
+              ev.preventDefault();
+              const href = card.getAttribute('data-href');
+              if (href) window.location.href = href;
+            }
+          });
+        });
+  
+        document.addEventListener('click', function (e) {
+          const btn = e.target.closest('[data-href]');
+          if (!btn) return;
+          if (isInsideInteractive(e.target) && e.target !== btn) return;
+          const href = btn.getAttribute('data-href');
+          if (href) window.location.href = href;
+        });
+      })();
+  
+    }); // onReady
+  })();
+  </script>
+  
+  
+
+  
+
+{% endblock %}

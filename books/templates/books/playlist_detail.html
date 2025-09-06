@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}{{ playlist.name }} — Playlist{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Header -->
+  <header class="flex items-start justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100">{{ playlist.name }}</h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        {{ playlist.description|default:"No description provided" }}
+      </p>
+    </div>
+    {% if user == playlist.user %}
+      <a href="{% url 'books:playlist_edit' playlist.id %}" 
+         class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-sm hover:bg-slate-200 dark:hover:bg-slate-700">
+        ✏ Edit
+      </a>
+    {% endif %}
+  </header>
+
+  <!-- Books in playlist -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    {% for book in playlist.books.all %}
+      <article class="bg-white dark:bg-slate-900 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-slate-800">
+        <a href="{% url 'books:book_detail' book.slug %}" class="block">
+          <div class="h-40 bg-slate-50 dark:bg-slate-800">
+            {% if book.cover_page %}
+              <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-full h-full object-cover">
+            {% else %}
+              <div class="w-full h-full flex items-center justify-center text-slate-400">📕</div>
+            {% endif %}
+          </div>
+          <div class="p-4">
+            <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{{ book.title }}</h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">{{ book.author }}</p>
+          </div>
+        </a>
+      </article>
+    {% empty %}
+      <div class="col-span-full text-center py-10 text-sm text-slate-500">
+        This playlist is empty.  
+        {% if user == playlist.user %}
+          <a href="{% url 'books:playlist_edit' playlist.id %}" class="text-indigo-600 hover:underline">Add books now</a>.
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

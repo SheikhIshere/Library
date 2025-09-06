@@ -8,6 +8,13 @@ from .views import (
     AddCommentView,
     RateBookView,
     AddTagView,
+    PlaylistListView,
+    PlaylistCreateView,
+    PlaylistDetailView,
+    PlaylistUpdateView,
+    AddBookToPlaylistView,
+    ReportCreateView,
+    SearchSuggestionsView,
 )
 
 app_name = 'books'
@@ -15,19 +22,26 @@ app_name = 'books'
 urlpatterns = [
     # Book CRUD
     path('', BookListView.as_view(), name='book_list'),
+    path('suggestions/', SearchSuggestionsView.as_view(), name='search_suggestions'),
     path('add/', BookCreateView.as_view(), name='add_book'),
     path('books_details/<str:slug>/', BookDetailView.as_view(), name='book_detail'),
-    # path('books_details/<str:slug>/edit/', BookUpdateView.as_view(), name='edit_book'),
+    path('books_details/<str:slug>/edit/', BookUpdateView.as_view(), name='edit_book'),
 
-    # Favorite toggle
-    # path('books_details/<str:slug>/favorite/', ToggleFavoriteView.as_view(), name='toggle_favorite'),
+    # Interactions
+    path('books_details/<str:slug>/favorite/', ToggleFavoriteView.as_view(), name='toggle_favorite'),
+    path('books_details/<str:slug>/comment/', AddCommentView.as_view(), name='add_comment'),
+    path('books_details/<str:slug>/rate/', RateBookView.as_view(), name='rate_book'),
+    path('books_details/<str:slug>/add_to_playlist/', AddBookToPlaylistView.as_view(), name='add_to_playlist'),
 
-    # Add comment
-    # path('books_details/<str:slug>/comment/', AddCommentView.as_view(), name='add_comment'),
-
-    # Rate book
-    # path('books_details/<str:slug>/rate/', RateBookView.as_view(), name='rate_book'),
-
-    # tag_adding
+    # Tagging
     path('tag/add/', AddTagView.as_view(), name='add_tag'),
+
+    # Playlists
+    path('playlists/', PlaylistListView.as_view(), name='playlist_list'),
+    path('playlists/add/', PlaylistCreateView.as_view(), name='playlist_add'),
+    path('playlists/<int:pk>/', PlaylistDetailView.as_view(), name='playlist_detail'),
+    path('playlists/<int:pk>/edit/', PlaylistUpdateView.as_view(), name='playlist_edit'),
+
+    # Report
+    path('books_details/<str:slug>/report/', ReportCreateView.as_view(), name='report_book'),
 ]

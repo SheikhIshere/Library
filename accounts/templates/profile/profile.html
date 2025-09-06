@@ -1,62 +1,401 @@
 {% extends "base.html" %}
 
+{% block title %}{{ profile.user.username }} — Profile{% endblock %}
+
 {% block content %}
-<div class="profile-card">
-    <h2>{{ profile.user.username }}'s Profile</h2>
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-    {% if profile.avatar %}
-        <img src="{{ profile.avatar.url }}" alt="Avatar" width="150">
-    {% else %}
-        <p>No profile picture uploaded.</p>
-    {% endif %}
-
-    <p><strong>Name:</strong> {{ profile.name }}</p>
-    <p><strong>Username:</strong> {{ profile.user.username }}</p>
-    <p><strong>Email:</strong> {{ profile.user.email }}</p>
-    <p><strong>Age:</strong> {{ profile.age }}</p>
-    <p><strong>Balance:</strong> ${{ profile.balance }}</p>
-    <p><strong>Gender:</strong> {{ profile.get_gender_display }}</p>
-    <p><strong>Address:</strong> {{ profile.address }}</p>
-    <p><strong>Phone:</strong> {{ profile.phone }}</p>
-    <p><strong>Social Link:</strong>
-        {% if profile.social_link %}
-            <a href="{{ profile.social_link }}" target="_blank">{{ profile.social_link }}</a>
+  <!-- HERO -->
+  <header class="bg-white dark:bg-slate-900 rounded-3xl shadow-lg overflow-hidden p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
+    <!-- Avatar & quick badges -->
+    <div class="flex items-start gap-4 md:col-span-1">
+      <div class="flex-shrink-0">
+        {% if profile.avatar %}
+          <img src="{{ profile.avatar.url }}" alt="{{ profile.user.username }} avatar"
+               class="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover shadow-md border border-slate-100 dark:border-slate-800" loading="lazy">
         {% else %}
-            N/A
+          <div class="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-md">
+            {{ profile.user.username|slice:":1"|upper }}
+          </div>
         {% endif %}
-    </p>
-    <p><strong>Verified:</strong> {% if profile.is_varified %}✅{% else %}❌{% endif %} </p>
-    <a href="{% url 'homepage' %}">back to home page</a>
-    <br>
-    <br>
-    {% if user.is_authenticated and user == profile.user %}
-        <a href="{% url 'accounts:profile_edit' profile.user.username %}">Edit Profile</a>
-    {% endif %}
+      </div>
 
-    <br>
-    <br>
-    <a href="{% url 'accounts:profile' profile.user.username %}" 
-   id="profile-link" target="_blank">
-   share profile
-</a>
+      <div class="flex-1">
+        <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
+          {{ profile.name|default:profile.user.username }}
+        </h1>
+        <p class="text-sm text-slate-500 dark:text-slate-300 mt-1">@{{ profile.user.username }}</p>
 
-<button type="button" onclick="copyProfileLink()"> 📋 </button>
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          {% if profile.is_varified %}
+            <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
+              ✅ Verified
+            </span>
+          {% endif %}
 
-<script>
-    function copyProfileLink() {    
-        // build the absolute URL for the profile
-        const profileUrl = window.location.origin + "{% url 'accounts:profile' profile.user.username %}";
-        
-        // copy to clipboard
-        navigator.clipboard.writeText(profileUrl).then(function() {
-            alert("copied");
-        }).catch(function(err) {
-            console.error("Failed to copy: ", err);
-        });
-    }
-    // http://127.0.0.1:8000/accounts/profile/admin
-    </script>
-    
+          <span class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
+            💰 {{ profile.balance|default:"0" }} tokens
+          </span>
+
+          {% if profile.age %}
+            <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-700 dark:text-slate-300 shadow-sm">
+              🎂 {{ profile.age }} yrs
+            </span>
+          {% endif %}
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <a class="text-slate-500 dark:text-slate-300 hover:text-indigo-600" href="mailto:{{ profile.user.email }}">{{ profile.user.email }}</a>
+          {% if profile.phone %}<span class="text-slate-400">·</span><span class="text-slate-500">{{ profile.phone }}</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Compact stats (center on desktop) -->
+    <div class="md:col-span-1 flex items-center justify-center">
+      <div class="w-full grid grid-cols-3 gap-2 md:gap-4">
+        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <div class="text-xs text-slate-400">Uploads</div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ uploaded_books|length }}</div>
+        </div>
+
+        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <div class="text-xs text-slate-400">Favorites</div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ related_stats.favorites_count|default:"0" }}</div>
+        </div>
+
+        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+          <div class="text-xs text-slate-400">Avg Rating</div>
+          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ related_stats.avg_rating|floatformat:1|default:"—" }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions (right column) -->
+    <div class="md:col-span-1 flex flex-col items-end gap-3">
+      <div class="flex items-center gap-2">
+        {% if user.is_authenticated and user == profile.user %}
+          <a href="{% url 'accounts:profile_edit' profile.user.username %}"
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700">
+            Edit profile
+          </a>
+        {% endif %}
+
+        <div class="flex items-center gap-2">
+          <button id="btn-share" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Share profile" aria-label="Share profile">🔗</button>
+          <button id="btn-copy" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Copy profile link" aria-label="Copy profile link">📋</button>
+          <button id="btn-vcard" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Download vCard" aria-label="Download vCard">📁</button>
+        </div>
+      </div>
+
+      <div class="text-right text-xs text-slate-500 dark:text-slate-400">
+        <div>{{ profile.address|default:"Location private" }}</div>
+        {% if profile.social_link %}
+          <a href="{{ profile.social_link }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">{{ profile.social_link|cut:"https://"|cut:"http://" }}</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- TABS: Overview / Books / Reviews / Playlists -->
+  <nav class="mt-6">
+    <div role="tablist" aria-label="Profile sections" class="flex gap-2 overflow-x-auto pb-1">
+      <button data-tab="overview" class="profile-tab active px-3 py-2 text-sm rounded-full bg-indigo-600 text-white focus:outline-none">Overview</button>
+      <button data-tab="books" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Books</button>
+      <button data-tab="reviews" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Reviews</button>
+      <button data-tab="playlists" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Playlists</button>
+    </div>
+  </nav>
+
+  <!-- TAB PANES -->
+  <section id="tab-contents" class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Overview (large, left) -->
+    <div id="overview" class="tab-pane lg:col-span-2">
+      <!-- compact carousel of recent uploads -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Recent uploads</h3>
+          <a href="{% url 'books:book_list' %}" class="text-sm text-indigo-600 hover:underline">View all</a>
+        </div>
+
+        <div class="mt-3 overflow-x-auto -mx-2 py-2">
+          <div class="flex gap-3 px-2">
+            {% for b in user_books|slice:":8" %}
+              <a href="{% url 'books:book_detail' b.slug %}" class="min-w-[200px] shrink-0 block rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm bg-white dark:bg-slate-800">
+                <div class="h-36 bg-slate-50 dark:bg-slate-900">
+                  {% if b.cover_page %}
+                    <img src="{{ b.cover_page.url }}" alt="{{ b.title }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <div class="w-full h-full flex items-center justify-center text-slate-400">No cover</div>
+                  {% endif %}
+                </div>
+                <div class="p-3">
+                  <div class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ b.title }}</div>
+                  <div class="text-xs text-slate-400 mt-1">{{ b.author }}</div>
+                </div>
+              </a>
+            {% empty %}
+              <div class="text-sm text-slate-500 px-2">No uploads yet.</div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Books for sale (compact grid) -->
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% for book in books_for_sale|slice:":6" %}
+          <article class="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
+            <div class="flex items-center gap-3">
+              {% if book.cover_page %}
+                <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-16 h-20 object-cover rounded-md">
+              {% else %}
+                <div class="w-16 h-20 bg-slate-100 dark:bg-slate-900 rounded-md"></div>
+              {% endif %}
+              <div class="flex-1 min-w-0">
+                <a href="{% url 'books:book_detail' book.slug %}" class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate block">{{ book.title }}</a>
+                <div class="text-xs text-slate-400">{{ book.author }}</div>
+                <div class="mt-2 flex items-center justify-between">
+                  <div class="text-sm font-semibold text-indigo-600">
+                    {% if book.price == 0 %}Free{% elif book.price == 1 %}1 token{% else %}{{ book.price }} tokens{% endif %}
+                  </div>
+                  <div class="text-xs text-slate-400">{{ book.total_favorites }} ♥</div>
+                </div>
+              </div>
+            </div>
+          </article>
+        {% empty %}
+          <div class="col-span-full text-center text-sm text-slate-500">No listings yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- right sidebar: small stats + quick actions -->
+    <aside class="space-y-4">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs text-slate-400">Total reviews</div>
+            <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ recent_reviews|length }}</div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-400">Playlists</div>
+            <div class="text-lg font-semibold text-slate-900 dark:text-slate-100">{{ user_playlists|length }}</div>
+          </div>
+        </div>
+
+        {% if user.is_authenticated and user == profile.user %}
+          <div class="mt-3 flex gap-2">
+            <a href="{% url 'books:playlist_add' %}" class="flex-1 text-center px-3 py-2 rounded-md bg-indigo-600 text-white text-sm">New playlist</a>
+            <a href="{% url 'books:add_book' %}" class="flex-1 text-center px-3 py-2 rounded-md bg-slate-50 dark:bg-slate-700 text-sm">Add book</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- small feed (recent activity) -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Recent activity</h4>
+        <ul class="mt-3 space-y-3 max-h-44 overflow-auto pr-2">
+          {% for b in user_books|slice:":6" %}
+            <li class="flex items-center gap-3">
+              {% if b.cover_page %}
+                <img src="{{ b.cover_page.url }}" alt="{{ b.title }}" class="w-10 h-12 object-cover rounded-md">
+              {% else %}
+                <div class="w-10 h-12 bg-slate-100 dark:bg-slate-800 rounded-md"></div>
+              {% endif %}
+              <div class="min-w-0">
+                <a href="{% url 'books:book_detail' b.slug %}" class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ b.title }}</a>
+                <div class="text-xs text-slate-400">{{ b.upload_date|date:"M j, Y" }}</div>
+              </div>
+              <div class="text-xs text-slate-400">{{ b.total_favorites }} ♥</div>
+            </li>
+          {% empty %}
+            <li class="text-sm text-slate-500">No recent activity.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </aside>
+  </section>
+
+  <!-- SEPARATE PANES (books / reviews / playlists) - hidden by default; toggled by tabs -->
+  <section class="mt-6 space-y-6">
+
+    <!-- Books -->
+    <div id="books" class="hidden tab-pane">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">All uploads</h3>
+          <div class="text-sm text-slate-500">{{ uploaded_books|length }} items</div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for book in uploaded_books %}
+            <article class="rounded-xl overflow-hidden border border-slate-100 dark:border-slate-800 shadow-sm">
+              <a href="{% url 'books:book_detail' book.slug %}" class="block">
+                <div class="h-36 bg-slate-50 dark:bg-slate-900">
+                  {% if book.cover_page %}
+                    <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-full h-full object-cover">
+                  {% endif %}
+                </div>
+                <div class="p-3">
+                  <div class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">{{ book.title }}</div>
+                  <div class="text-xs text-slate-400 mt-1">{{ book.author }}</div>
+                </div>
+              </a>
+            </article>
+          {% empty %}
+            <div class="col-span-full text-center py-8 text-sm text-slate-500">No uploads yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Reviews -->
+    <div id="reviews" class="hidden tab-pane">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Reviews</h3>
+        <div class="mt-4 space-y-4">
+          {% for review in recent_reviews %}
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800 shadow-sm">
+              <div class="flex items-start gap-3">
+                <div class="text-sm font-medium text-slate-900 dark:text-slate-100">{{ review.user.username }}</div>
+                <div class="text-xs text-slate-400 ml-auto">{{ review.created_at|date:"M j, Y" }}</div>
+              </div>
+              <p class="text-sm text-slate-700 dark:text-slate-200 mt-2">"{{ review.comment }}"</p>
+              <div class="text-xs text-slate-400 mt-2">On <a href="{% url 'books:book_detail' review.book.slug %}" class="text-indigo-600 hover:underline">{{ review.book.title }}</a></div>
+            </div>
+          {% empty %}
+            <div class="text-sm text-slate-500">No reviews yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Playlists -->
+    <div id="playlists" class="hidden tab-pane">
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-4 shadow">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Playlists</h3>
+          <div class="text-sm text-slate-500">{{ user_playlists|length }} collections</div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {% for pl in user_playlists %}
+            <div class="p-3 rounded-xl border border-slate-100 dark:border-slate-800 shadow-sm">
+              <div class="flex items-center justify-between">
+                <div>
+                  <div class="font-medium text-slate-900 dark:text-slate-100">{{ pl.name }}</div>
+                  <div class="text-xs text-slate-400 mt-1">{{ pl.description|default:"No description" }}</div>
+                </div>
+                <div class="text-xs text-slate-400">{{ pl.books.count }} books</div>
+              </div>
+
+              <!-- small row of book covers (up to 5) -->
+              <div class="mt-3 flex items-center gap-2">
+                {% for pb in pl.books.all|slice:":5" %}
+                  {% if pb.cover_page %}
+                    <img src="{{ pb.cover_page.url }}" alt="{{ pb.title }}" class="w-10 h-12 object-cover rounded-md">
+                  {% else %}
+                    <div class="w-10 h-12 bg-slate-100 dark:bg-slate-800 rounded-md"></div>
+                  {% endif %}
+                {% empty %}
+                  <div class="text-sm text-slate-500">No books</div>
+                {% endfor %}
+              </div>
+
+            </div>
+          {% empty %}
+            <div class="col-span-full text-center py-8 text-sm text-slate-500">No playlists yet.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  </section>
 
 </div>
+
+<script>
+  (function () {
+    // tabs
+    const tabs = document.querySelectorAll('.profile-tab');
+    const panes = document.querySelectorAll('.tab-pane');
+
+    function setActive(tabBtn) {
+      tabs.forEach(t => t.classList.remove('active', 'bg-indigo-600', 'text-white'));
+      tabs.forEach(t => t.classList.add('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-200'));
+      tabBtn.classList.add('active', 'bg-indigo-600', 'text-white');
+      tabBtn.classList.remove('bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-200');
+
+      const id = tabBtn.dataset.tab;
+      panes.forEach(p => p.classList.add('hidden'));
+      const pane = document.getElementById(id);
+      if (pane) pane.classList.remove('hidden');
+      // smooth scroll on mobile
+      if (window.innerWidth < 768) pane && pane.scrollIntoView({behavior: 'smooth'});
+    }
+
+    tabs.forEach(t => t.addEventListener('click', (e) => setActive(t)));
+    // initialise first tab
+    setActive(document.querySelector('.profile-tab.active') || tabs[0]);
+
+    // share/copy/vcard
+    const profilePath = "{% url 'accounts:profile' profile.user.username %}";
+    const profileUrl = (window.location.origin || (window.location.protocol + '//' + window.location.host)) + profilePath;
+
+    document.getElementById('btn-copy')?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(profileUrl);
+        toast('Link copied');
+      } catch (err) { alert(profileUrl); }
+    });
+
+    document.getElementById('btn-share')?.addEventListener('click', async () => {
+      if (navigator.share) {
+        try {
+          await navigator.share({ title: '{{ profile.name|default:profile.user.username|escapejs }}', text: 'Check this profile', url: profileUrl });
+        } catch (err) {}
+      } else {
+        try { await navigator.clipboard.writeText(profileUrl); toast('Link copied'); } catch(e){ alert(profileUrl); }
+      }
+    });
+
+    document.getElementById('btn-vcard')?.addEventListener('click', () => {
+      const name = '{{ profile.name|escapejs|default:profile.user.username|escapejs }}';
+      const email = '{{ profile.user.email|default:"" }}';
+      const phone = '{{ profile.phone|default:"" }}';
+      const url = profileUrl;
+      const adr = '{{ profile.address|default:"" |escapejs }}';
+
+      const vcardLines = [
+        'BEGIN:VCARD',
+        'VERSION:3.0',
+        `FN:${name}`,
+        email ? `EMAIL;TYPE=INTERNET:${email}` : '',
+        phone ? `TEL;TYPE=CELL:${phone}` : '',
+        url ? `URL:${url}` : '',
+        adr ? `ADR;TYPE=HOME:;;${adr};;;;` : '',
+        'END:VCARD'
+      ].filter(Boolean).join('\\r\\n');
+
+      const blob = new Blob([vcardLines], { type: 'text/vcard' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `${profile.user.username}.vcf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast('vCard downloaded');
+    });
+
+    function toast(text) {
+      const t = document.createElement('div');
+      t.className = 'fixed bottom-6 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2 rounded-full shadow-lg z-50';
+      t.textContent = text;
+      document.body.appendChild(t);
+      setTimeout(() => t.classList.add('opacity-0'), 1800);
+      setTimeout(() => t.remove(), 2200);
+    }
+  })();
+</script>
 {% endblock %}

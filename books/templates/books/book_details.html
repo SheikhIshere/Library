@@ -3,29 +3,428 @@
 {% block title %}{{ book.title }}{% endblock %}
 
 {% block content %}
-<h1>{{ book.title }}</h1>
-<p>Author: {{ book.author }}</p>
-<p>{{ book.description }}</p>
-<p>Visibility: {{ book.visibility }}</p>
-<p>
-    Price: 
-    {% if book.price == 0 %}
-        free
-    {% elif book.price > 1 %}
-        {{ book.price }} tokens
-    {% else %}
-        {{ book.price }} token
-    {% endif %}
-</p>
+<!-- Container -->
+<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
 
+  <!-- Top header card -->
+  <section class="mt-8 bg-gradient-to-b from-white/60 to-white/80 dark:from-slate-900/60 dark:to-slate-900/40 rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-8 items-start">
+    <!-- Cover -->
+    <div class="col-span-1 flex justify-center md:justify-start">
+      {% if book.cover_page %}
+        <img
+          src="{{ book.cover_page.url }}"
+          alt="Cover - {{ book.title }}"
+          class="w-48 md:w-56 h-auto rounded-xl object-cover shadow-xl transform transition-all hover:scale-[1.02]"
+          loading="lazy"
+        />
+      {% else %}
+        <div class="w-48 md:w-56 h-72 bg-gradient-to-tr from-gray-100 to-gray-50 rounded-xl flex items-center justify-center text-gray-400 shadow-inner">
+          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2v6m0 8v6M2 12h6m8 0h6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>
+        </div>
+      {% endif %}
+    </div>
 
-<!-- Cover page -->
-{% if book.cover_page %}
-    <img src="{{ book.cover_page.url }}" alt="Cover" width="200">
-{% endif %}
+    <!-- Details -->
+    <div class="col-span-2 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
+            {{ book.title }}
+          </h1>
+          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-300 mt-1">
+            By <span class="font-semibold text-slate-700 dark:text-slate-100">{{ book.author }}</span>
+          </p>
+        </div>
 
-<!-- Download -->
+        <!-- Price & favorites -->
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <p class="text-sm text-slate-500">Price</p>
+            <div class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
+              {% if book.price == 0 %}
+                Free
+              {% elif book.price > 1 %}
+                {{ book.price }} tokens
+              {% else %}
+                {{ book.price }} token
+              {% endif %}
+            </div>
+          </div>
+
+          <form method="post" action="{% url 'books:toggle_favorite' book.slug %}" class="min-w-[140px]">
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl shadow-lg bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold transition-transform transform hover:-translate-y-0.5"
+              aria-pressed="{% if is_favorited %}true{% else %}false{% endif %}"
+            >
+              <span class="text-lg">
+                {% if user.is_authenticated and is_favorited %}
+                  ❤️
+                {% else %}
+                  🤍
+                {% endif %}
+              </span>
+              <span class="text-sm">
+                {% if book.total_favorites %}{{ book.total_favorites }}{% else %}0{% endif %}
+              </span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Description -->
+      <div class="prose prose-slate dark:prose-invert max-w-none text-slate-700">
+        {{ book.description|linebreaks }}
+      </div>
+
+      <!-- Meta -->
+      <div class="flex flex-wrap gap-3 items-center mt-2">
+        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
+          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Uploaded: {{ book.upload_date|date:"M j, Y" }}
+        </span>
+        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
+          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M3 7v10a2 2 0 0 0 2 2h14V5H5a2 2 0 0 0-2 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Visibility: {{ book.visibility|capfirst }}
+        </span>
+        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
+          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M12 4.5c4.142 0 7.5 3.358 7.5 7.5s-3.358 7.5-7.5 7.5S4.5 16.142 4.5 12 7.858 4.5 12 4.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Avg rating: <span class="ml-1 font-semibold text-slate-800 dark:text-slate-100">{{ book.average_rating|floatformat:1 }}</span>
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- BIG GRID: PDF viewer / rating & comments -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+
+    <!-- Main: PDF Viewer (large, occupies two columns on lg) -->
+    <article class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
+      <div class="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
+        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">📖 Read / Preview</h3>
+
+        <div class="flex items-center gap-3">
+          <span class="text-sm text-slate-600 dark:text-slate-300">Page <span id="page-num">1</span> / <span id="page-count">0</span></span>
+        </div>
+      </div>
+
+      <!-- Toolbar overlay -->
+      <div class="p-4 md:p-6 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 bg-gradient-to-b from-white/60 dark:from-slate-900/60">
+        <div class="flex items-center gap-2">
+          <button id="prev" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Prev
+          </button>
+          <button id="next" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md">
+            Next
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+
+        <div class="ml-auto flex items-center gap-3">
+          <button id="zoom-out" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm">−</button>
+          <div class="text-sm text-slate-700 dark:text-slate-300 font-medium px-2">Zoom</div>
+          <button id="zoom-in" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm">+</button>
+          <a href="{{ book.book_file.url }}" class="ml-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M12 3v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Download
+          </a>
+        </div>
+      </div>
+
+      <!-- PDF Canvas container -->
+      <div id="pdf-container" class="min-h-[420px] md:min-h-[520px] p-4 md:p-6 flex items-center justify-center bg-gradient-to-b from-slate-50 dark:from-transparent">
+        <div id="canvas-wrap" class="w-full max-w-[1100px] rounded-xl bg-white dark:bg-slate-800 p-4 md:p-6 shadow-inner flex justify-center">
+          <canvas id="pdf-render" class="rounded" aria-label="PDF preview canvas"></canvas>
+        </div>
+      </div>
+    </article>
+
+    <!-- Sidebar: Rating + Comments -->
+    <aside class="space-y-6">
+
+      <!-- Rating card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
+        <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">⭐ Rate this book</h4>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Share your rating — one per account.</p>
+
+        <form method="post" action="{% url 'books:rate_book' book.slug %}" class="mt-4" novalidate>
+          {% csrf_token %}
+          <!-- Hidden input to submit numeric rating -->
+          <input type="hidden" name="rating" id="rating-input" value="0">
+
+          <!-- Star visual -->
+          <div class="flex items-center gap-2 mt-2" role="radiogroup" aria-label="Star rating">
+            {% comment %} Stars are interactive with JS below. {% endcomment %}
+            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="1" aria-checked="false" aria-label="1 star">
+              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="2" aria-checked="false" aria-label="2 stars">
+              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="3" aria-checked="false" aria-label="3 stars">
+              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="4" aria-checked="false" aria-label="4 stars">
+              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="5" aria-checked="false" aria-label="5 stars">
+              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+
+          <div class="mt-4 flex gap-2">
+            <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow">Submit</button>
+            <button type="button" id="reset-rating" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800">Reset</button>
+          </div>
+        </form>
+
+        <p class="text-sm text-slate-500 mt-3">Average: <span class="font-semibold text-slate-800 dark:text-slate-100">{{ book.average_rating|floatformat:1 }}</span> • <span class="text-slate-600 dark:text-slate-300">{{ book.total_ratings }} ratings</span></p>
+      </div>
+
+      <!-- Comments card -->
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
+        <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">💬 Comments</h4>
+        <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Join the conversation — be respectful and helpful.</p>
+
+        <!-- List -->
+        <div class="mt-4 space-y-3 max-h-[360px] overflow-auto pr-2">
+          {% for comment in book.comment_set.all %}
+            <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">
+                    {{ comment.user.username|slice:":1"|upper }}
+                  </div>
+                  <div>
+                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ comment.user.username }}</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-300">{{ comment.created_at|date:"M j, Y H:i" }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="mt-3 text-slate-700 dark:text-slate-200 text-sm leading-relaxed">{{ comment.comment }}</p>
+            </div>
+          {% empty %}
+            <div class="text-sm text-slate-500">No comments yet — be the first to leave one.</div>
+          {% endfor %}
+        </div>
+
+        <!-- Add comment form -->
+        <div class="mt-4">
+          {% if user.is_authenticated %}
+            <form method="post" action="{% url 'books:add_comment' book.slug %}">
+              {% csrf_token %}
+              <label for="comment" class="sr-only">Add a comment</label>
+              <textarea id="comment" name="comment" rows="3" required
+                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                        placeholder="Write a thoughtful comment..."></textarea>
+              <div class="mt-3 flex items-center justify-between gap-3">
+                <div class="text-xs text-slate-500">Be kind — follow community guidelines.</div>
+                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow">Post comment</button>
+              </div>
+            </form>
+          {% else %}
+            <div class="mt-2 text-sm text-slate-500">
+              <a href="{% url 'accounts:signin' %}" class="text-indigo-600 hover:underline">Log in</a> to post a comment.
+            </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Related (optional) -->
+      {% if related_books %}
+      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
+        <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Related books</h4>
+        <div class="mt-3 grid grid-cols-2 gap-3">
+          {% for r in related_books %}
+            <a href="{% url 'books:book_detail' r.slug %}" class="flex items-center gap-3 p-2 rounded-md hover:bg-slate-50 dark:hover:bg-slate-800">
+              {% if r.cover_page %}
+                <img src="{{ r.cover_page.url }}" alt="{{ r.title }}" class="w-12 h-16 object-cover rounded-md">
+              {% else %}
+                <div class="w-12 h-16 bg-slate-100 rounded-md"></div>
+              {% endif %}
+              <div class="text-sm">
+                <div class="font-medium text-slate-800 dark:text-slate-100">{{ r.title|truncatechars:28 }}</div>
+                <div class="text-xs text-slate-500 dark:text-slate-300">{{ r.author|truncatechars:28 }}</div>
+              </div>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+    </aside>
+  </div>
+</div>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+
+<script>
+/* ---------- PDF Viewer (responsive + performant) ---------- */
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
 {% if book.book_file %}
-    <p><a href="{{ book.book_file.url }}">Download file </a></p>
+const url = "{{ book.book_file.url }}";
+let pdfDoc = null;
+let currentPage = 1;
+let scale = 1.15;
+const canvas = document.getElementById('pdf-render');
+const ctx = canvas.getContext('2d');
+const pageNumSpan = document.getElementById('page-num');
+const pageCountSpan = document.getElementById('page-count');
+const canvasWrap = document.getElementById('canvas-wrap');
+
+function computeScale(viewportWidth) {
+  // adapt scale to fit container width with some margin
+  const container = canvasWrap.clientWidth - 32;
+  return (container / viewportWidth) * (window.devicePixelRatio || 1);
+}
+
+function renderPage(num) {
+  if (!pdfDoc) return;
+  pdfDoc.getPage(num).then(page => {
+    const viewport = page.getViewport({ scale: 1 });
+    // compute dynamic scale that fits container nicely
+    const dynamicScale = computeScale(viewport.width) * (scale);
+    const vp = page.getViewport({ scale: dynamicScale });
+
+    canvas.width = Math.floor(vp.width);
+    canvas.height = Math.floor(vp.height);
+    canvas.style.width = Math.min(canvas.width, canvasWrap.clientWidth) + 'px';
+    canvas.style.height = (canvas.height) + 'px';
+    const renderCtx = {
+      canvasContext: ctx,
+      viewport: vp
+    };
+
+    // render
+    page.render(renderCtx).promise.then(() => {
+      pageNumSpan.textContent = num;
+      pageCountSpan.textContent = pdfDoc.numPages;
+      // accessibility
+      canvas.setAttribute('role', 'img');
+      canvas.setAttribute('aria-label', `Page ${num} of ${pdfDoc.numPages}`);
+    }).catch(err => {
+      console.error('Render error:', err);
+    });
+  }).catch(err => {
+    console.error('Get page error:', err);
+  });
+}
+
+document.getElementById('prev').addEventListener('click', () => {
+  if (currentPage <= 1) return;
+  currentPage--;
+  renderPage(currentPage);
+});
+
+document.getElementById('next').addEventListener('click', () => {
+  if (currentPage >= pdfDoc.numPages) return;
+  currentPage++;
+  renderPage(currentPage);
+});
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+  scale = Math.min(scale + 0.15, 2.8);
+  renderPage(currentPage);
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  scale = Math.max(scale - 0.15, 0.5);
+  renderPage(currentPage);
+});
+
+// load document
+pdfjsLib.getDocument(url).promise.then(doc => {
+  pdfDoc = doc;
+  pageCountSpan.textContent = pdfDoc.numPages;
+  currentPage = 1;
+  renderPage(currentPage);
+}).catch(err => {
+  console.error('PDF load error', err);
+  document.getElementById('pdf-container').innerHTML = '<div class="text-red-500">Failed to load preview. Please download to view.</div>';
+});
+
+// responsive: re-render after resize (debounced)
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    if (pdfDoc) renderPage(currentPage);
+  }, 200);
+});
+
+// swipe support for mobile
+let touchStartX = 0;
+canvasWrap.addEventListener('touchstart', (e) => { touchStartX = e.changedTouches[0].screenX; }, {passive:true});
+canvasWrap.addEventListener('touchend', (e) => {
+  const diff = e.changedTouches[0].screenX - touchStartX;
+  if (Math.abs(diff) > 80) {
+    if (diff > 0) { if (currentPage > 1) { currentPage--; renderPage(currentPage); } }
+    else { if (currentPage < pdfDoc.numPages) { currentPage++; renderPage(currentPage); } }
+  }
+}, {passive:true});
+
 {% endif %}
+</script>
+
+<script>
+/* ---------- Star Rating UI ---------- */
+(function () {
+  const starBtns = document.querySelectorAll('.star-btn');
+  const ratingInput = document.getElementById('rating-input');
+  const resetBtn = document.getElementById('reset-rating');
+
+  function setStars(value) {
+    starBtns.forEach(btn => {
+      const v = parseInt(btn.dataset.value, 10);
+      const svg = btn.querySelector('.star');
+      if (v <= value) {
+        btn.classList.add('bg-yellow-50');
+        svg.style.fill = 'currentColor';
+        svg.style.color = '#f59e0b'; // amber-500
+        btn.setAttribute('aria-checked', 'true');
+      } else {
+        btn.classList.remove('bg-yellow-50');
+        svg.style.fill = 'none';
+        svg.style.color = 'currentColor';
+        btn.setAttribute('aria-checked', 'false');
+      }
+    });
+    ratingInput.value = value;
+  }
+
+  starBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const v = parseInt(btn.dataset.value, 10);
+      // toggle off if same value clicked
+      if (parseInt(ratingInput.value,10) === v) { setStars(0); return; }
+      setStars(v);
+    });
+
+    // keyboard support
+    btn.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        btn.click();
+      }
+    });
+  });
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => setStars(0));
+  }
+
+  // initialize (if user has an existing rating, the server could inject it; default 0)
+  setStars(0);
+})();
+</script>
+
+<style>
+/* small polish: custom scrollbar for comment list */
+#pdf-container::-webkit-scrollbar, .max-h-[360px]::-webkit-scrollbar { height: 8px; width: 10px; }
+#pdf-container::-webkit-scrollbar-thumb, .max-h-[360px]::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.12); border-radius: 999px; }
+</style>
 {% endblock %}

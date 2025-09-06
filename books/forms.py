@@ -1,5 +1,5 @@
 from django import forms
-from .models import Books, Comment, BookRating, Tag
+from .models import Books, Comment, BookRating, Tag, Playlist, Report
 
 # Book Form
 class BooksForm(forms.ModelForm):
@@ -61,3 +61,15 @@ class TagForm(forms.ModelForm):
     class Meta:
         model = Tag
         fields = ['name']
+
+# Playlist Form
+class PlaylistForm(forms.ModelForm):
+    class Meta:
+        model = Playlist
+        fields = ['name', 'description', 'books']
+
+# Report Form
+class ReportForm(forms.ModelForm):
+    class Meta:
+        model = Report
+        fields = ['reason', 'description']

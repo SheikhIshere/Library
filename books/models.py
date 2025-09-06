@@ -133,3 +133,33 @@ class BookFavorite(models.Model):
     class Meta:
         unique_together = ("user", "book")
 
+
+
+class Playlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="playlists")
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    books = models.ManyToManyField("Books", related_name="in_playlists", blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.name} ({self.user.username})"
+
+
+REPORT_CHOICES = [
+    ('copyright', 'Copyright Violation'),
+    ('adult', 'Adult Content'),
+    ('spam', 'Spam / Misleading'),
+    ('other', 'Other'),
+]
+
+class Report(models.Model):
+    reporter = models.ForeignKey(User, on_delete=models.CASCADE)
+    book = models.ForeignKey("Books", on_delete=models.CASCADE, related_name="reports")
+    reason = models.CharField(max_length=20, choices=REPORT_CHOICES)
+    description = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Report on {self.book.title} by {self.reporter.username}"

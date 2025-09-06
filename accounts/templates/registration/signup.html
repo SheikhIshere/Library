@@ -1,15 +1,159 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign Up</title>
-</head>
-<body>
-    <form action="{% url 'accounts:signup' %}" method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Sign Up</button>
-    </form>
-</body>
-</html>
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Create account — Sign Up{% endblock %}
+
+{% block content %}
+<!-- Full-bleed background image + gradient overlay -->
+<div class="min-h-screen flex items-center justify-center px-4"
+     style="background-image:
+            linear-gradient(rgba(11,18,34,0.60), rgba(11,18,34,0.60)),
+            url('https://images.unsplash.com/photo-1512820790803-83ca734da794?q=80&w=1920&auto=format&fit=crop&s=7b5b1e8b10c3a2e1b2e7f0d1d89a0f6f');
+            background-size: cover; background-position: center;">
+  <div class="w-full max-w-md">
+    <!-- Card -->
+    <div class="bg-white/95 dark:bg-slate-900/90 backdrop-blur rounded-2xl shadow-2xl overflow-hidden transform transition-all duration-300">
+      <div class="px-8 py-10">
+        <!-- Header -->
+        <h1 class="text-3xl font-extrabold text-center text-slate-900 dark:text-white">Create your account</h1>
+        <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-300">
+          Join the community — preview, publish, sell and discuss books.
+        </p>
+
+        <!-- Messages -->
+        {% if messages %}
+          <div class="mt-4 space-y-2">
+            {% for message in messages %}
+              <div class="px-4 py-2 rounded-lg text-sm
+                          {% if message.tags == 'error' %}bg-rose-50 text-rose-700 border border-rose-200
+                          {% elif message.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200
+                          {% else %}bg-slate-50 text-slate-700 border border-slate-200{% endif %}">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form action="{% url 'accounts:signup' %}" method="post" class="mt-6 space-y-5" novalidate>
+          {% csrf_token %}
+
+          {# Render fields with consistent styling. help_text is intentionally NOT shown. #}
+          {% for field in form.visible_fields %}
+            <div>
+              <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">
+                {{ field.label }}{% if field.field.required %}<span class="text-rose-600"> *</span>{% endif %}
+              </label>
+
+              {% if field.field.widget.input_type == "textarea" %}
+                {{ field|add_class:"w-full rounded-lg border border-slate-300 dark:border-slate-700 p-3 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"|attr:"rows:4" }}
+              {% else %}
+                {{ field|add_class:"w-full rounded-lg border border-slate-300 dark:border-slate-700 p-3 bg-white dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500" }}
+              {% endif %}
+
+              {% if field.errors %}
+                <p class="mt-2 text-xs text-rose-600">{{ field.errors|join:", " }}</p>
+              {% endif %}
+            </div>
+          {% endfor %}
+
+          <!-- Terms -->
+          <div class="flex items-start gap-3">
+            {% if form.fields.terms %}
+              {# If your form defines a terms checkbox, include it as a visible field already above. #}
+            {% else %}
+              <label class="inline-flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
+                <input type="checkbox" name="terms" value="1" class="h-4 w-4 rounded border-slate-300 dark:border-slate-700 focus:ring-indigo-500">
+                <span>I agree to the <a href="#" class="text-indigo-600 hover:underline">Terms</a> and <a href="#" class="text-indigo-600 hover:underline">Privacy Policy</a>.</span>
+              </label>
+            {% endif %}
+          </div>
+
+          <!-- Small password hint (keeps UX but not 'help_text') -->
+          <div class="text-xs text-slate-500">
+            Tip: Choose a strong password — 8+ characters with a mix of letters and numbers.
+          </div>
+
+          <!-- Submit -->
+          <button type="submit" class="w-full py-3 rounded-lg bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-semibold shadow hover:opacity-95 transition">
+            Create account
+          </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="mt-6 flex items-center gap-3">
+          <div class="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+          <div class="text-xs text-slate-400">or</div>
+          <div class="flex-1 h-px bg-slate-100 dark:bg-slate-800"></div>
+        </div>
+
+        <!-- Social / alternative sign up -->
+        <div class="mt-4 grid grid-cols-1 gap-3">
+          <a href="#" class="inline-flex items-center justify-center gap-3 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-100 shadow-sm hover:bg-slate-50">
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/google.svg" alt="Google" class="w-4 h-4"> Continue with Google
+          </a>
+          <a href="#" class="inline-flex items-center justify-center gap-3 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-100 shadow-sm hover:bg-slate-50">
+            <img src="https://cdn.jsdelivr.net/npm/simple-icons@v9/icons/github.svg" alt="GitHub" class="w-4 h-4"> Continue with GitHub
+          </a>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-center text-sm text-slate-200">
+          Already have an account?
+          <a href="{% url 'accounts:signin' %}" class="font-semibold text-indigo-200 hover:underline">Sign in</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Password strength meter (keeps user-friendly feedback) -->
+<script>
+(function () {
+  const pw = document.querySelector('input[type="password"][name="password"]')
+            || document.querySelector('input[type="password"][name="password1"]')
+            || document.querySelector('input[type="password"]');
+  if (!pw) return;
+
+  // Create strength meter element
+  const meterWrap = document.createElement('div');
+  meterWrap.className = 'mt-2 h-2 rounded bg-slate-100 overflow-hidden';
+  const meterBar = document.createElement('div');
+  meterBar.style.width = '0%';
+  meterBar.className = 'h-full bg-emerald-400 transition-all';
+  meterWrap.appendChild(meterBar);
+  pw.parentNode.appendChild(meterWrap);
+
+  pw.addEventListener('input', () => {
+    const v = pw.value;
+    let score = 0;
+    if (v.length >= 8) score += 1;
+    if (/[A-Z]/.test(v)) score += 1;
+    if (/[0-9]/.test(v)) score += 1;
+    if (/[^A-Za-z0-9]/.test(v)) score += 1;
+    const pct = Math.min(100, (score / 4) * 100);
+    meterBar.style.width = pct + '%';
+    if (pct < 50) {
+      meterBar.classList.remove('bg-emerald-400');
+      meterBar.classList.add('bg-rose-500');
+    } else {
+      meterBar.classList.remove('bg-rose-500');
+      meterBar.classList.add('bg-emerald-400');
+    }
+  });
+
+  // autofocus first visible input for better UX
+  const firstInput = document.querySelector('form input:not([type="hidden"]):not([disabled])');
+  if (firstInput) firstInput.focus();
+})();
+</script>
+
+<!-- Small entrance animation (fallback for projects without Tailwind animation utilities) -->
+<style>
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px) scale(.995); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.motion-safe\:animate-fade-in-up { animation: fade-in-up .38s ease-out both; }
+</style>
+{% endblock %}

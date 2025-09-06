@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}{% if playlist %}Edit Playlist{% else %}Create Playlist{% endif %}{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg">
+
+    <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
+      {% if playlist %}✏ Edit Playlist{% else %}➕ Create Playlist{% endif %}
+    </h1>
+
+    {# Non-field errors #}
+    {% if form.non_field_errors %}
+      <div class="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+        {{ form.non_field_errors|join:" " }}
+      </div>
+    {% endif %}
+
+    <form method="post" class="space-y-5" novalidate>
+      {% csrf_token %}
+
+      <!-- Name -->
+      <div>
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Name</label>
+        {{ form.name|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" }}
+        {% if form.name.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.name.help_text }}</p>{% endif %}
+        {% if form.name.errors %}<p class="text-xs text-red-600 mt-1">{{ form.name.errors|join:", " }}</p>{% endif %}
+      </div>
+
+      <!-- Description -->
+      <div>
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
+        {{ form.description|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" }}
+        {% if form.description.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.description.help_text }}</p>{% endif %}
+        {% if form.description.errors %}<p class="text-xs text-red-600 mt-1">{{ form.description.errors|join:", " }}</p>{% endif %}
+      </div>
+
+      <!-- Books (multi-select) -->
+      <div>
+        <label for="{{ form.books.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Books</label>
+        {{ form.books|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 h-40" }}
+        {% if form.books.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.books.help_text }}</p>{% endif %}
+        {% if form.books.errors %}<p class="text-xs text-red-600 mt-1">{{ form.books.errors|join:", " }}</p>{% endif %}
+      </div>
+
+      <div class="flex justify-end gap-3">
+        <a href="{% url 'books:playlist_list' %}" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">Cancel</a>
+        <button type="submit" class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow hover:bg-indigo-700">
+          Save
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Report Book — {{ book.title|default:"Book" }}{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+  <!-- HEADER -->
+  <header class="mb-6">
+    <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+      🚩 Report Book
+    </h1>
+    <p class="mt-2 text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+      You’re reporting <span class="font-semibold text-slate-800 dark:text-slate-200">“{{ book.title }}”</span>
+      {% if book.author %} by {{ book.author }}{% endif %}. Reports are <strong>confidential</strong> and help us maintain a safe, trustworthy library.
+    </p>
+  </header>
+
+  <!-- BOOK PREVIEW -->
+  <div class="flex items-center gap-4 p-4 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
+    {% if book.cover_page %}
+      <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-20 h-28 object-cover rounded-md shadow">
+    {% else %}
+      <div class="w-20 h-28 flex items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-md text-slate-400">📕</div>
+    {% endif %}
+    <div class="flex-1 min-w-0">
+      <h2 class="text-base font-semibold text-slate-900 dark:text-slate-100 truncate">{{ book.title }}</h2>
+      {% if book.author %}
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ book.author }}</p>
+      {% endif %}
+      <p class="text-xs text-slate-400 mt-1">Uploaded by {{ book.uploader.username }}</p>
+    </div>
+  </div>
+
+  <!-- non-field errors -->
+  {% if form.non_field_errors %}
+    <div class="mt-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
+      {{ form.non_field_errors|join:", " }}
+    </div>
+  {% endif %}
+
+  <!-- FORM -->
+  <form method="post" class="mt-6 space-y-6" novalidate>
+    {% csrf_token %}
+
+    <!-- STEP 1: Reason -->
+    <section>
+      <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Select a reason</h3>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {# iterate the choices and create accessible radio cards #}
+        {% with field=form.reason %}
+          {% for value,label in field.field.choices %}
+            {% comment %} unique id for each option {% endcomment %}
+            {% with id=field.id_for_label|stringformat:"s_"|add:forloop.counter %}
+              <label for="{{ id }}" class="flex items-center gap-3 p-4 rounded-xl border border-slate-200 dark:border-slate-700 cursor-pointer hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-800 transition">
+                <input
+                  id="{{ id }}"
+                  type="radio"
+                  name="{{ field.name }}"
+                  value="{{ value }}"
+                  class="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  {% if field.value|stringformat:"s" == value|stringformat:"s" %}checked{% endif %}>
+                <span class="text-sm text-slate-700 dark:text-slate-200">{{ label }}</span>
+              </label>
+            {% endwith %}
+          {% endfor %}
+        {% endwith %}
+      </div>
+
+      {% if form.reason.errors %}
+        <p class="text-xs text-red-600 mt-2">{{ form.reason.errors|join:", " }}</p>
+      {% endif %}
+    </section>
+
+    <!-- STEP 2: Description -->
+    <section>
+      <h3 class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-3">Provide details (optional)</h3>
+
+      {# use widget_tweaks to add consistent classes to the textarea #}
+      <div>
+        {{ form.description|add_class:"mt-1 block w-full rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm shadow-sm focus:ring-indigo-500 focus:border-indigo-500 placeholder-slate-400" }}
+        {% if form.description.help_text %}
+          <p class="text-xs text-slate-400 mt-1">{{ form.description.help_text }}</p>
+        {% endif %}
+        {% if form.description.errors %}
+          <p class="text-xs text-red-600 mt-2">{{ form.description.errors|join:", " }}</p>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- STEP 3: Trust note -->
+    <section class="bg-slate-50 dark:bg-slate-800 p-4 rounded-xl text-xs text-slate-500 dark:text-slate-400">
+      <p>⚠ Please report responsibly. Misuse of this feature may lead to restrictions on your account.</p>
+    </section>
+
+    <!-- ACTIONS -->
+    <div class="flex items-center justify-end gap-4">
+      <a href="{% url 'books:book_detail' book.slug %}"
+         class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">Cancel</a>
+      <button type="submit"
+        class="px-6 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold shadow hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+        aria-label="Submit report">
+        Submit Report
+      </button>
+    </div>
+  </form>
+
+  <!-- FOOTER NOTE -->
+  <footer class="mt-6 text-xs text-slate-400 dark:text-slate-500">
+    Your report will be reviewed by our moderation team. You won’t receive direct updates, but action will be taken if necessary.
+  </footer>
+
+</div>
+{% endblock %}

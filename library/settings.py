@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'accounts',
     'books',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [
@@ -125,11 +126,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 # static files
-STATIC_URL = 'static/'
+# correct static url (leading slash)
+STATIC_URL = '/static/'
 
-# media files
+# folder where you keep project-level static during development
+STATICFILES_DIRS = [BASE_DIR / "static"]
+
+# where collectstatic will gather files for production
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# media (consistent with Path)
 MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 
 # Default primary key field type

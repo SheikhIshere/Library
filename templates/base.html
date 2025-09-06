@@ -1,59 +1,877 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}
-        
-    {% endblock title %}</title>
+  <!-- ====================================================== -->
+  <!-- ================ HEAD / META / SCRIPTS ============== -->
+  <!-- ====================================================== -->
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>{% block title %}Genu Library{% endblock %}</title>
+
+  <!-- ====================================================== -->
+  <!-- ================ Tailwind / Icons =================== -->
+  <!-- (CDN builds — your project already uses these)       -->
+  <!-- ====================================================== -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- ====================================================== -->
+  <!-- ================ THEME / META ======================= -->
+  <!-- ====================================================== -->
+  <meta name="theme-color" content="#111827" />
+
+  {% block extra_head %}{% endblock %}
+
+  <!-- ====================================================== -->
+  <!-- ================ SMALL INLINE POLISH ================= -->
+  <!-- (tiny accessible focus fallback and helpers)         -->
+  <!-- ====================================================== -->
+  <style>
+    /* small custom polish */
+    .site-max { max-width: 1200px; }
+    .transition-fast { transition: all .18s ease-in-out; }
+    /* Accessible focus ring fallback */
+    :focus { outline: 3px solid rgba(99,102,241,0.16); outline-offset: 3px; }
+  </style>
 </head>
-<body>
-    <!-- here will be nav bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'homepage' %}">Genu Library</a>
-            <div class="collapse navbar-collapse">
-                <ul class="navbar-nav ms-auto">
-                    {% if user.is_authenticated %}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ user.username }}
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="{% url 'accounts:profile' user.username %}">Profile</a></li>
-                                <li><a class="dropdown-item" href="{% url 'books:book_list' %}">all books</a></li>
-                                <li><a class="dropdown-item" href="{% url 'books:add_book' %}">add book</a></li>
-                                <li><a class="dropdown-item" href="{% url 'books:add_tag' %}">add tag</a></li>
-                                <li><a class="dropdown-item" href="#">your books</a></li>
-                                <li><a class="dropdown-item" href="#">your borrow books</a></li>
-                            </ul>
-                        </li>
-                        <li class="nav-item">
-                            <form action="{% url 'accounts:logout' %}" method="post" style="display:inline;">
-                                {% csrf_token %}
-                                <button type="submit">Logout</button>
-                            </form>
-                        </li>
-                    {% else %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'accounts:signup' %}">Sign Up</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'accounts:signin' %}">Login</a>
-                        </li>
-                    {% endif %}
-                </ul>
+
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased">
+
+  <!-- ====================================================== -->
+  <!-- =================== TOP NAVIGATION =================== -->
+  <!-- ====================================================== -->
+  
+<header id="site-header" class="bg-white dark:bg-slate-800/60 backdrop-blur sticky top-0 z-50 shadow-sm">
+  <div class="site-max mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center gap-4 justify-between h-16">
+
+      <!-- Left: Brand + mobile menu -->
+      <div class="flex items-center gap-3">
+        <!-- Mobile menu button -->
+        <button id="mobile-menu-button"
+                aria-expanded="false"
+                aria-controls="mobile-menu"
+                class="md:hidden p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700 transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                title="Open menu">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <!-- Brand -->
+        <a href="{% url 'homepage' %}" class="inline-flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold shadow">
+            GL
+          </div>
+          <div class="hidden sm:block">
+            <div class="text-sm font-extrabold leading-none tracking-tight">Genu Library</div>
+            <div class="text-xs text-slate-500 dark:text-slate-300">Read • Share • Discover</div>
+          </div>
+        </a>
+      </div>
+
+      <!-- Middle: search (desktop) -->
+      <div class="flex-1 hidden md:flex items-center justify-center px-2">
+        <form action="{% url 'books:book_list' %}" method="get" class="w-full max-w-2xl relative" role="search" aria-label="Site search">
+          <label for="global-search" class="sr-only">Search books, authors, users or tags</label>
+
+          <input id="global-search"
+                 name="q"
+                 type="search"
+                 autocomplete="off"
+                 placeholder="Search title, author, user, tag or ISBN..."
+                 value="{{ request.GET.q|default:'' }}"
+                 data-suggestions-url="{% url 'books:search_suggestions' %}"
+                 class="w-full rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 pl-12 pr-32 py-2 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400 focus:outline-none" />
+
+          <!-- left icon -->
+          <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+              <circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </div>
+
+          <!-- right quick filters + submit -->
+          <div class="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
+            <!-- Search type selector -->
+            <select name="type"
+                    id="search-type"
+                    class="hidden sm:block text-xs border border-slate-200 dark:border-slate-700 rounded-full px-2 py-1 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 focus:ring-2 focus:ring-indigo-400"
+                    aria-label="Search type">
+              <option value="">All</option>
+              <option value="books" {% if request.GET.type == 'books' %}selected{% endif %}>Books</option>
+              <option value="authors" {% if request.GET.type == 'authors' %}selected{% endif %}>Authors</option>
+              <option value="users" {% if request.GET.type == 'users' %}selected{% endif %}>Users</option>
+              <option value="tags" {% if request.GET.type == 'tags' %}selected{% endif %}>Tags</option>
+            </select>
+
+            <button type="submit"
+                    aria-label="Search"
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium shadow hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+              <span class="hidden sm:inline">Search</span>
+            </button>
+          </div>
+
+          <!-- Suggestions container (injected by JS) -->
+          <!-- The JS will create and append #global-search-suggestions inside this .relative parent -->
+        </form>
+      </div>
+
+      <!-- Right: actions (theme, add, auth) -->
+      <div class="flex items-center gap-3">
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'books:add_book' %}"
+             class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+             title="Add a new book">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Add Book
+          </a>
+
+          <a href="{% url 'books:add_book' %}"
+             class="sm:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-600 text-white shadow-md hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+             title="Add book (mobile)">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </a>
+        {% endif %}
+
+        <!-- Theme toggle -->
+        <button id="theme-toggle"
+                class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                title="Toggle color theme"
+                aria-pressed="false">
+          <svg id="icon-moon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          <svg id="icon-sun" class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+        </button>
+
+        <!-- User / Auth -->
+        {% if user.is_authenticated %}
+          <!-- wrapper must be positioned relative for absolute dropdown -->
+          <div class="relative" id="user-menu-wrapper">
+            <button id="user-menu-button"
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded="false"
+                    class="flex items-center gap-3 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
+              {% if user.profile.avatar %}
+                <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar"
+                     class="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-slate-600 shadow-sm">
+              {% else %}
+                <span class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">
+                  {{ user.username|slice:":1"|upper }}
+                </span>
+              {% endif %}
+
+              <span class="hidden sm:block text-sm font-medium text-slate-800 dark:text-slate-100">{{ user.username }}</span>
+
+              <svg id="user-menu-chevron" class="w-4 h-4 text-slate-500 transition-transform" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+
+            <!-- user menu -->
+            <div id="user-menu"
+                 class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 py-2 z-50 focus:outline-none"
+                 role="menu"
+                 aria-labelledby="user-menu-button">
+              <a href="{% url 'accounts:profile' user.username %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Profile</a>
+              <a href="{% url 'books:book_list' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">All books</a>
+              <a href="{% url 'books:add_book' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Add book</a>
+              <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
+              <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
+                <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Logout</button>
+              </form>
             </div>
+          </div>
+        {% else %}
+          <div class="flex items-center gap-2">
+            <a href="{% url 'accounts:signin' %}" class="text-sm text-slate-700 dark:text-slate-200 hover:underline">Sign in</a>
+            <a href="{% url 'accounts:signup' %}" class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-indigo-600 text-white text-sm font-medium">Sign up</a>
+          </div>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Mobile menu panel -->
+<nav id="mobile-menu" class="md:hidden hidden bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700" aria-label="Mobile menu">
+  <div class="px-4 pt-4 pb-6 space-y-3">
+    <!-- mobile search -->
+    <form action="{% url 'books:book_list' %}" method="get" class="w-full">
+      <label for="mobile-search" class="sr-only">Search books</label>
+      <div class="relative">
+        <input id="mobile-search" name="q" type="search" placeholder="Search books..." class="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-3 pl-10 text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-400" />
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.2"/></svg>
         </div>
-    </nav>
-    <main>
-        {% block content %}            
-        {% endblock content %}
-    </main>
+      </div>
+    </form>
 
-    <!-- here will be footer -->
-     <footer>
+    <!-- menu links -->
+    <div class="pt-2">
+      <a href="{% url 'books:book_list' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">All books</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'books:add_book' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add book</a>
+        <a href="{% url 'books:add_tag' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add tags</a>
+      {% else %}
+        <a href="{% url 'accounts:signin' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Sign in</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
 
-     </footer>
+
+
+<!-- ====================================================== -->
+<!-- ================ MOBILE NAVIGATION PANEL ============= -->
+<!-- ====================================================== -->
+<nav id="mobile-menu" class="md:hidden hidden bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700" aria-label="Mobile menu">
+  <div class="px-4 pt-4 pb-6 space-y-3">
+    <!-- mobile search -->
+    <form action="{% url 'books:book_list' %}" method="get" class="w-full">
+      <label for="mobile-search" class="sr-only">Search books</label>
+      <div class="relative">
+        <input id="mobile-search" name="q" type="search" placeholder="Search books..." class="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-3 pl-10 text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-400" />
+        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.2"/></svg>
+        </div>
+      </div>
+    </form>
+
+    <!-- menu links -->
+    <div class="pt-2">
+      <a href="{% url 'books:book_list' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">All books</a>
+      {% if user.is_authenticated %}
+        <a href="{% url 'books:add_book' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add book</a>
+        <a href="{% url 'books:add_tag' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add tags</a>
+      {% else %}
+        <a href="{% url 'accounts:signin' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Sign in</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+  <!-- ====================================================== -->
+<!-- =================== FLASH / MESSAGES ================== -->
+<!-- ====================================================== -->
+<div class="site-max mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+  <!-- messages container: aria-live so screenreaders are informed -->
+  <div id="django-messages" class="space-y-3" aria-live="polite" role="status">
+    {% if messages %}
+      {% for message in messages %}
+        <!--
+          .flash = our message wrapper
+          data-timeout = milliseconds before auto-dismiss (3s = 3000)
+          role="alert" used for important messages (keeps screen-reader behavior intact)
+        -->
+        <div
+          class="flash rounded-lg p-3 text-sm shadow-sm border flex items-start gap-3
+                 transition transform opacity-100 translate-y-0
+                 duration-200 ease-out
+                 {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                 {% elif message.tags == 'error' or message.tags == 'danger' %}bg-rose-50 text-rose-700 border-rose-100
+                 {% else %}bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-800{% endif %}"
+          role="alert"
+          data-timeout="3000"
+        >
+          <div class="flex-shrink-0">
+            <!-- icon -->
+            <svg class="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 9v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="12" cy="14" r="8" stroke="currentColor" stroke-width="1.2"/>
+            </svg>
+          </div>
+
+          <div class="flex-1">
+            {{ message }}
+          </div>
+
+          <div class="flex-shrink-0">
+            <!-- dismiss button -->
+            <button type="button" class="close-msg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                    aria-label="Dismiss message" title="Dismiss">
+              &times;
+            </button>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+
+
+  <!-- ====================================================== -->
+  <!-- =================== MAIN CONTENT WRAPPER ============== -->
+  <!-- ====================================================== -->
+  <main class="site-max mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ====================================================== -->
+<!-- =================== ENHANCED FOOTER ================== -->
+<!-- ====================================================== -->
+<footer class="mt-16 bg-gradient-to-t from-white to-slate-50 dark:from-slate-900 dark:to-slate-800/40 border-t border-slate-100 dark:border-slate-700">
+  <div class="site-max mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Top grid: brand / newsletter / nav -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+
+      <!-- ========== Brand & short about ========== -->
+      <div class="space-y-4">
+        <a href="{% url 'homepage' %}" class="inline-flex items-center gap-3">
+          <div class="w-12 h-12 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-extrabold shadow-lg">
+            GL
+          </div>
+          <div>
+            <div class="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">Genu Library</div>
+            <div class="text-xs text-slate-500 dark:text-slate-300">Read • Share • Discover</div>
+          </div>
+        </a>
+
+        <p class="text-sm text-slate-600 dark:text-slate-300 max-w-sm">
+          A community library to find free & premium reads, curate playlists, and share reviews. Built for readers — by readers.
+        </p>
+
+        <div class="flex items-center gap-3">
+          <!-- social -->
+          <a href="#" class="inline-flex items-center justify-center p-2 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition" aria-label="Genu Library on Twitter">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="inline-flex items-center justify-center p-2 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition" aria-label="Genu Library on Facebook">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="inline-flex items-center justify-center p-2 rounded-md bg-indigo-50 text-indigo-600 hover:bg-indigo-100 transition" aria-label="Genu Library on Instagram">
+            <i class="fab fa-instagram"></i>
+          </a>
+        </div>
+      </div>
+
+      <!-- ========== Newsletter (prominent, accessible) ========== -->
+      <div class="md:col-span-1">
+        <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Stay in the loop</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Get weekly curated picks, community highlights & new uploads.</p>
+
+        <form id="newsletter-form" class="mt-4 flex gap-2">
+          <label for="newsletter-email" class="sr-only">Email address</label>
+          <input id="newsletter-email" name="email" type="email" required
+                 placeholder="you@domain.com"
+                 class="flex-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-sm placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-400 focus:outline-none"
+                 aria-label="Email for newsletter">
+          <button type="submit"
+                  class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-600 text-white text-sm font-semibold shadow hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                  aria-label="Subscribe to newsletter">
+            Subscribe
+          </button>
+        </form>
+
+        <!-- live region for newsletter status -->
+        <div id="newsletter-status" class="mt-3 text-xs" aria-live="polite"></div>
+
+        <!-- small trust / privacy line -->
+        <p class="mt-3 text-xs text-slate-500 dark:text-slate-400">We respect your privacy. No spam. Unsubscribe anytime.</p>
+      </div>
+
+      <!-- ========== Quick links (sitemaps / help) ========== -->
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Explore</h4>
+          <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <li><a href="{% url 'books:book_list' %}" class="hover:underline">Browse books</a></li>
+            <li><a href="{% url 'books:playlist_list' %}" class="hover:underline">Playlists</a></li>
+            <li><a href="{% url 'books:book_list' %}?tag=popular" class="hover:underline">Popular tags</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="text-sm font-semibold text-slate-900 dark:text-slate-100">Company</h4>
+          <ul class="mt-3 space-y-2 text-sm text-slate-600 dark:text-slate-300">
+            <li><a href="#" class="hover:underline">About</a></li>
+            <li><a href="#" class="hover:underline">Docs</a></li>
+            <li><a href="#" class="hover:underline">Contact</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Divider -->
+    <div class="mt-8 border-t border-slate-100 dark:border-slate-700 pt-6"></div>
+
+    <!-- Bottom: copyright + micro links + back-to-top -->
+    <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-xs text-slate-600 dark:text-slate-300">
+        © {{ now.year }} Genu Library — Built with <span aria-hidden="true">❤️</span> for readers
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a href="#" class="text-xs text-slate-600 dark:text-slate-300 hover:underline">Terms</a>
+        <a href="#" class="text-xs text-slate-600 dark:text-slate-300 hover:underline">Privacy</a>
+        <a href="#" class="text-xs text-slate-600 dark:text-slate-300 hover:underline">Report an issue</a>
+      </div>
+
+      <!-- back to top -->
+      <div class="flex items-center justify-end w-full sm:w-auto">
+        <button id="back-to-top" type="button"
+                class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-100 text-sm shadow-sm hover:bg-slate-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                title="Back to top" aria-label="Scroll back to top">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 15l7-7 7 7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Top
+        </button>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- ====================================================== -->
+<!-- ================= END ENHANCED FOOTER ================= -->
+<!-- ====================================================== -->
+
+
+  {% block extra_js %}{% endblock %}
+
+  <!-- ====================================================== -->
+  <!-- =================== SMALL FOCUSED SCRIPTS ============ -->
+  <!-- (Mobile menu, user menu, theme toggle, messages)     -->
+  <!-- ====================================================== -->
+  {# ---------------------- #}
+{#  SITE-WIDE JS (drop in base.html extra_js)  #}
+{# ---------------------- #}
+<script>
+  /* Site UI — cleaned, single authoritative script
+     - idempotent (dataset guards)
+     - prevents click-race using pointerdown capture + short suppression window
+     - mobile menu, user menu (keyboard + focus), theme toggle, search suggestions,
+       flash messages, newsletter stub, back-to-top
+     - defensive: will no-op when elements are not present
+  */
+  (function () {
+    // single-init guard
+    if (document.documentElement.dataset.siteUiInit === '1') return;
+    document.documentElement.dataset.siteUiInit = '1';
+  
+    // helpers
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const noop = () => {};
+  
+    /* ----------------------
+       MOBILE MENU TOGGLE
+       IDs: #mobile-menu-button, #mobile-menu
+    ---------------------- */
+    (function mobileMenuToggle() {
+      const btn = $('#mobile-menu-button');
+      const menu = $('#mobile-menu');
+      if (!btn || !menu) return;
+      if (btn.dataset.mobileInit === '1') return;
+      btn.dataset.mobileInit = '1';
+  
+      btn.addEventListener('click', (e) => {
+        const opened = menu.classList.toggle('hidden') === false;
+        btn.setAttribute('aria-expanded', String(opened));
+      });
+    })();
+  
+    /* ----------------------
+       USER MENU (robust)
+       IDs: #user-menu-button, #user-menu
+       Optional: #user-menu-wrapper, #user-menu-chevron
+       Approach:
+        - pointerdown in capture phase for robust click-away
+        - short "suppress close" window after opening to avoid immediate re-close by other handlers
+        - keyboard navigation + escape + focus management
+    ---------------------- */
+    (function userMenuToggle() {
+      const btn = $('#user-menu-button');
+      const menu = $('#user-menu');
+      if (!btn || !menu) return;
+      if (btn.dataset.userMenuInit === '1') return;
+      btn.dataset.userMenuInit = '1';
+  
+      const wrapper = $('#user-menu-wrapper') || document.body;
+      const chevron = $('#user-menu-chevron');
+  
+      // ARIA defaults (safe to set)
+      if (!menu.hasAttribute('role')) menu.setAttribute('role', 'menu');
+      if (!menu.hasAttribute('tabindex')) menu.setAttribute('tabindex', '-1');
+      btn.setAttribute('aria-controls', 'user-menu');
+      btn.setAttribute('aria-expanded', String(!menu.classList.contains('hidden')));
+      menu.setAttribute('aria-hidden', String(menu.classList.contains('hidden')));
+  
+      let lastOpenedAt = 0;       // timestamp used to suppress immediate close (ms)
+      const SUPPRESS_MS = 300;    // ignore pointer events within this ms after opening
+  
+      function setAria(open) {
+        btn.setAttribute('aria-expanded', String(open));
+        menu.setAttribute('aria-hidden', String(!open));
+      }
+  
+      function getFocusableElements() {
+        const nodes = menu.querySelectorAll('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+        return Array.from(nodes).filter(el => {
+          try { return el.offsetWidth > 0 || el.offsetHeight > 0 || el.getClientRects().length > 0; }
+          catch (e) { return true; }
+        });
+      }
+  
+      function openMenu({ focusFirst = true } = {}) {
+        menu.classList.remove('hidden');
+        setAria(true);
+        if (chevron) chevron.style.transform = 'rotate(180deg)';
+        lastOpenedAt = Date.now();
+        const focusables = getFocusableElements();
+        if (focusFirst && focusables.length) focusables[0].focus();
+        else try { menu.focus(); } catch (e) {}
+      }
+  
+      function closeMenu({ restoreFocus = true } = {}) {
+        menu.classList.add('hidden');
+        setAria(false);
+        if (chevron) chevron.style.transform = '';
+        if (restoreFocus) try { btn.focus(); } catch (e) {}
+      }
+  
+      // Toggle on button click
+      btn.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const wasHidden = menu.classList.contains('hidden');
+        if (wasHidden) {
+          // defensive: close other user-menus with same id (rare) but only hide, don't re-open them
+          document.querySelectorAll('#user-menu').forEach(m => { if (m !== menu) m.classList.add('hidden'); });
+          openMenu({ focusFirst: true });
+        } else {
+          closeMenu({ restoreFocus: false });
+        }
+      });
+  
+      // Helper: checks whether the event path includes an element
+      function eventPathIncludes(el, path) {
+        if (!path) return false;
+        if (Array.isArray(path)) return path.includes(el);
+        try { return path.indexOf(el) !== -1; } catch (e) { return Array.from(path || []).includes(el); }
+      }
+  
+      // pointerdown capture for robust click-away (prevents click-race). Passive + capture.
+      document.addEventListener('pointerdown', (ev) => {
+        // If menu closed already, nothing to do
+        if (menu.classList.contains('hidden')) return;
+  
+        // If opened very recently, ignore this pointerdown (avoid immediate re-close by other code)
+        if (Date.now() - lastOpenedAt < SUPPRESS_MS) return;
+  
+        const path = (ev.composedPath && ev.composedPath()) || (function () {
+          const p = []; let n = ev.target;
+          while (n) { p.push(n); n = n.parentNode; }
+          return p;
+        })();
+  
+        // If click started inside button/menu/wrapper -> ignore
+        if (eventPathIncludes(btn, path) || eventPathIncludes(menu, path) || (wrapper && eventPathIncludes(wrapper, path))) return;
+  
+        // Otherwise close
+        closeMenu({ restoreFocus: false });
+      }, { capture: true, passive: true });
+  
+      // Keyboard navigation + Escape + Home/End
+      document.addEventListener('keydown', (ev) => {
+        if (menu.classList.contains('hidden')) return;
+  
+        const focusables = getFocusableElements();
+        if (ev.key === 'Escape') {
+          ev.preventDefault();
+          closeMenu({ restoreFocus: true });
+          return;
+        }
+        if (!focusables.length) return;
+  
+        const idx = focusables.indexOf(document.activeElement);
+        if (ev.key === 'ArrowDown') {
+          ev.preventDefault();
+          focusables[(idx + 1) % focusables.length].focus();
+        } else if (ev.key === 'ArrowUp') {
+          ev.preventDefault();
+          focusables[(idx - 1 + focusables.length) % focusables.length].focus();
+        } else if (ev.key === 'Home') {
+          ev.preventDefault(); focusables[0].focus();
+        } else if (ev.key === 'End') {
+          ev.preventDefault(); focusables[focusables.length - 1].focus();
+        }
+      });
+  
+      // If focus leaves menu entirely, close after small delay (handles Tab navigation)
+      menu.addEventListener('focusout', () => {
+        setTimeout(() => {
+          const active = document.activeElement;
+          if (!menu.contains(active) && active !== btn) closeMenu({ restoreFocus: false });
+        }, 10);
+      });
+  
+      // Safety: close on layout changes (resize/scroll)
+      const onWindowChange = () => { if (!menu.classList.contains('hidden')) closeMenu({ restoreFocus: false }); };
+      window.addEventListener('resize', onWindowChange);
+      window.addEventListener('scroll', onWindowChange, true);
+  
+      // Small API for debugging from console
+      try { btn._userMenuApi = { open: () => openMenu({ focusFirst: true }), close: () => closeMenu({ restoreFocus: true }), isOpen: () => !menu.classList.contains('hidden') }; } catch (e) {}
+    })();
+  
+  
+    /* ----------------------
+       THEME TOGGLE
+       ID: #theme-toggle, icons: #icon-sun, #icon-moon
+    ---------------------- */
+    (function themeToggle() {
+      const toggle = $('#theme-toggle');
+      if (!toggle || toggle.dataset.themeInit === '1') return;
+      toggle.dataset.themeInit = '1';
+      const sun = $('#icon-sun');
+      const moon = $('#icon-moon');
+  
+      function showSun(){ if (sun) sun.classList.remove('hidden'); if (moon) moon.classList.add('hidden'); }
+      function showMoon(){ if (moon) moon.classList.remove('hidden'); if (sun) sun.classList.add('hidden'); }
+  
+      function setDark(dark) {
+        try {
+          if (dark) {
+            document.documentElement.classList.add('dark');
+            localStorage.setItem('site-theme', 'dark');
+            toggle.setAttribute('aria-pressed','true');
+            showMoon();
+          } else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem('site-theme', 'light');
+            toggle.setAttribute('aria-pressed','false');
+            showSun();
+          }
+        } catch (err) { console.warn('theme toggle failed', err); }
+      }
+  
+      try {
+        const saved = localStorage.getItem('site-theme');
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (saved === 'dark' || (!saved && prefersDark)) setDark(true);
+        else setDark(false);
+      } catch (err) { console.warn('theme init failed', err); }
+  
+      toggle.addEventListener('click', () => setDark(!document.documentElement.classList.contains('dark')));
+    })();
+  
+  
+    /* ----------------------
+       GLOBAL SEARCH SUGGESTIONS (desktop)
+       - input must have data-suggestions-url or the Django template url tag rendered
+       - ID expected: #global-search
+    ---------------------- */
+    (function globalSearch() {
+      const input = document.getElementById('global-search');
+      if (!input) return;
+  
+      // create container only once
+      const parent = input.closest('.relative') || input.parentNode;
+      parent.style.position = parent.style.position || 'relative';
+  
+      let container = parent.querySelector('#global-search-suggestions');
+      if (!container) {
+        container = document.createElement('div');
+        container.id = 'global-search-suggestions';
+        container.className = 'absolute z-50 w-full mt-1 max-w-full';
+        container.style.display = 'none';
+        parent.appendChild(container);
+      }
+      const list = container.querySelector('ul') || (function () {
+        const ul = document.createElement('ul');
+        ul.className = 'bg-white dark:bg-slate-900 rounded-xl shadow-lg ring-1 ring-black ring-opacity-5 py-1 overflow-hidden divide-y divide-slate-100 dark:divide-slate-800 max-h-52 overflow-auto';
+        ul.setAttribute('role', 'listbox');
+        container.appendChild(ul);
+        return ul;
+      })();
+  
+      let suggestions = [], activeIndex = -1, controller = null, debounce = null;
+  
+      function hide() { container.style.display = 'none'; activeIndex = -1; }
+      function show() { container.style.display = 'block'; }
+  
+      function escapeHtml(s) {
+        return (s+'').replace(/[&<>"'`=\/]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#x2F;','`':'&#x60;','=':'&#x3D;'}[c]));
+      }
+  
+      function render(items) {
+        suggestions = items || [];
+        list.innerHTML = '';
+        if (!suggestions.length) { hide(); return; }
+        suggestions.forEach((t,i) => {
+          const li = document.createElement('li');
+          li.className = 'px-3 py-2 text-sm text-slate-700 dark:text-slate-200 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center gap-2';
+          li.setAttribute('role','option');
+          li.setAttribute('data-index', String(i));
+          li.innerHTML = `<span class="truncate">${escapeHtml(t)}</span>`;
+          li.addEventListener('mousedown', (ev)=> { ev.preventDefault(); choose(i); });
+          list.appendChild(li);
+        });
+        activeIndex = -1;
+        show();
+      }
+  
+      function choose(idx) {
+        if (idx < 0 || idx >= suggestions.length) return;
+        input.value = suggestions[idx];
+        hide();
+        input.focus();
+      }
+  
+      function highlight(idx) {
+        Array.from(list.children).forEach((el,i) => {
+          el.classList.toggle('bg-indigo-50', i === idx);
+          el.classList.toggle('dark:bg-slate-800', i === idx);
+        });
+        activeIndex = idx;
+        const el = list.children[activeIndex];
+        if (el) {
+          const r = el.getBoundingClientRect();
+          const c = list.getBoundingClientRect();
+          if (r.bottom > c.bottom) el.scrollIntoView({ block: 'end' });
+          else if (r.top < c.top) el.scrollIntoView({ block: 'start' });
+        }
+      }
+  
+      function fetchSuggestions(q) {
+        if (!q) { render([]); return; }
+        if (controller) controller.abort();
+        controller = new AbortController();
+        const urlBase = input.dataset.suggestionsUrl || '';
+        if (!urlBase) { render([]); return; }
+        const url = new URL(urlBase, window.location.origin);
+        url.searchParams.set('q', q);
+        fetch(url.toString(), { signal: controller.signal })
+          .then(r => r.ok ? r.json() : Promise.reject(r))
+          .then(data => {
+            const items = (data && data.results) ? data.results : [];
+            render(items.slice(0,12));
+          })
+          .catch(err => {
+            if (err.name === 'AbortError') return;
+            console.warn('suggestion fetch failed', err);
+            render([]);
+          });
+      }
+  
+      input.addEventListener('input', () => {
+        const q = input.value.trim();
+        clearTimeout(debounce);
+        debounce = setTimeout(() => fetchSuggestions(q), 220);
+      });
+  
+      input.addEventListener('keydown', (ev) => {
+        if (container.style.display === 'none') return;
+        const max = suggestions.length - 1;
+        if (ev.key === 'ArrowDown') { ev.preventDefault(); highlight(Math.min(activeIndex + 1, max)); }
+        else if (ev.key === 'ArrowUp') { ev.preventDefault(); highlight(Math.max(activeIndex - 1, 0)); }
+        else if (ev.key === 'Enter') { if (activeIndex >= 0) { ev.preventDefault(); choose(activeIndex); } hide(); }
+        else if (ev.key === 'Escape') { hide(); }
+      });
+  
+      input.addEventListener('blur', () => setTimeout(hide, 150));
+      document.addEventListener('click', (ev) => { if (!parent.contains(ev.target)) hide(); });
+    })();
+  
+  
+    /* ----------------------
+       FLASH MESSAGES (auto-dismiss + pause on hover + manual close)
+       container id: #django-messages (if present)
+    ---------------------- */
+    (function flashMessages() {
+      try {
+        const container = document.getElementById('django-messages');
+        if (!container) return;
+        function dismiss(el) {
+          if (!el || el.dataset.dismissing === 'true') return;
+          el.dataset.dismissing = 'true';
+          el.style.transition = 'opacity .18s ease, transform .18s ease';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(-6px)';
+          el.addEventListener('transitionend', () => { try { el.remove(); } catch (e) {} }, { once: true });
+        }
+  
+        Array.from(container.querySelectorAll('.flash, [role="alert"], .rounded-lg')).forEach(el => {
+          const timeoutMs = parseInt(el.dataset.timeout, 10) || 3000;
+          let timer = setTimeout(() => dismiss(el), timeoutMs);
+          el.addEventListener('pointerenter', () => clearTimeout(timer));
+          el.addEventListener('focusin', () => clearTimeout(timer));
+          el.addEventListener('pointerleave', () => timer = setTimeout(() => dismiss(el), timeoutMs));
+          el.addEventListener('focusout', () => timer = setTimeout(() => dismiss(el), timeoutMs));
+          const closeBtn = el.querySelector('.close-msg');
+          if (closeBtn) closeBtn.addEventListener('click', (ev) => { ev.preventDefault(); dismiss(el); });
+          el.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') dismiss(el); });
+        });
+      } catch (e) { console.warn('flash messages init failed', e); }
+    })();
+  
+  
+    /* ----------------------
+       NEWSLETTER STUB + TEMP TOAST (non-blocking)
+    ---------------------- */
+    (function newsletterStub() {
+      try {
+        const form = document.getElementById('newsletter-form');
+        const status = document.getElementById('newsletter-status');
+        if (!form || form.dataset.init === '1') return;
+        form.dataset.init = '1';
+  
+        function showTemp(text, kind='info', ms=3000) {
+          try {
+            const id = 'site-toast';
+            const prev = document.getElementById(id);
+            if (prev) prev.remove();
+            const el = document.createElement('div');
+            el.id = id;
+            el.className = 'fixed bottom-6 right-4 z-50 rounded-full px-4 py-2 shadow-lg text-sm flex items-center gap-3 transition';
+            el.textContent = text;
+            document.body.appendChild(el);
+            setTimeout(()=> { el.style.opacity = '0'; el.addEventListener('transitionend', ()=>el.remove()); }, ms);
+          } catch (e) {}
+        }
+  
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const input = form.querySelector('input[name="email"]');
+          const val = (input && input.value || '').trim();
+          const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (!re.test(val)) {
+            if (status) { status.textContent = 'Please enter a valid email address.'; status.className = 'text-xs text-rose-600 mt-2'; }
+            showTemp('Please enter a valid email', 'error', 3000);
+            return;
+          }
+          if (status) { status.textContent = 'Thanks — you\\'re subscribed!'; status.className = 'text-xs text-emerald-700 mt-2'; }
+          showTemp('Subscribed — check your inbox!', 'info', 3000);
+          setTimeout(()=>{ if (input) input.value = ''; }, 800);
+        });
+      } catch (e) { console.warn('newsletter init failed', e); }
+    })();
+  
+  
+    /* ----------------------
+       BACK-TO-TOP
+       ID: #back-to-top
+    ---------------------- */
+    (function backToTop() {
+      try {
+        const back = document.getElementById('back-to-top');
+        if (!back || back.dataset.init === '1') return;
+        back.dataset.init = '1';
+        function toggleBack() { if (window.scrollY > 320) back.classList.remove('hidden'); else back.classList.add('hidden'); }
+        toggleBack();
+        window.addEventListener('scroll', toggleBack);
+        back.addEventListener('click', (e) => { e.preventDefault(); window.scrollTo({ top: 0, behavior: 'smooth' }); });
+      } catch (e) { /* ignore */ }
+    })();
+  
+  })(); // end site init
+  </script>
+  
+  
+
 </body>
 </html>
