@@ -38,10 +38,10 @@
 
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased">
 
-  <!-- ====================================================== -->
-  <!-- =================== TOP NAVIGATION =================== -->
-  <!-- ====================================================== -->
-  
+<!-- ====================================================== -->
+<!-- ====================================================== -->
+<!-- =================== TOP NAVIGATION =================== -->
+
 <header id="site-header" class="bg-white dark:bg-slate-800/60 backdrop-blur sticky top-0 z-50 shadow-sm">
   <div class="site-max mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center gap-4 justify-between h-16">
@@ -110,7 +110,7 @@
             <button type="submit"
                     aria-label="Search"
                     class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium shadow hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                    <i class="fa-solid fa-magnifying-glass"></i>
               <span class="hidden sm:inline">Search</span>
             </button>
           </div>
@@ -200,7 +200,7 @@
   </div>
 </header>
 
-<!-- Mobile menu panel -->
+<!-- Mobile menu panel (single copy) -->
 <nav id="mobile-menu" class="md:hidden hidden bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700" aria-label="Mobile menu">
   <div class="px-4 pt-4 pb-6 space-y-3">
     <!-- mobile search -->
@@ -229,34 +229,6 @@
 
 
 
-<!-- ====================================================== -->
-<!-- ================ MOBILE NAVIGATION PANEL ============= -->
-<!-- ====================================================== -->
-<nav id="mobile-menu" class="md:hidden hidden bg-white dark:bg-slate-800 border-b border-slate-100 dark:border-slate-700" aria-label="Mobile menu">
-  <div class="px-4 pt-4 pb-6 space-y-3">
-    <!-- mobile search -->
-    <form action="{% url 'books:book_list' %}" method="get" class="w-full">
-      <label for="mobile-search" class="sr-only">Search books</label>
-      <div class="relative">
-        <input id="mobile-search" name="q" type="search" placeholder="Search books..." class="w-full rounded-lg border border-slate-200 dark:border-slate-700 p-3 pl-10 text-sm bg-white dark:bg-slate-800 focus:ring-2 focus:ring-indigo-400" />
-        <div class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
-          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.2"/></svg>
-        </div>
-      </div>
-    </form>
-
-    <!-- menu links -->
-    <div class="pt-2">
-      <a href="{% url 'books:book_list' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">All books</a>
-      {% if user.is_authenticated %}
-        <a href="{% url 'books:add_book' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add book</a>
-        <a href="{% url 'books:add_tag' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add tags</a>
-      {% else %}
-        <a href="{% url 'accounts:signin' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Sign in</a>
-      {% endif %}
-    </div>
-  </div>
-</nav>
 
   <!-- ====================================================== -->
 <!-- =================== FLASH / MESSAGES ================== -->
@@ -438,6 +410,8 @@
   <!-- (Mobile menu, user menu, theme toggle, messages)     -->
   <!-- ====================================================== -->
   {# ---------------------- #}
+{#  SITE-WIDE JS (drop in base.html extra_js)  #}
+{# ---------------------- #}
 {#  SITE-WIDE JS (drop in base.html extra_js)  #}
 {# ---------------------- #}
 <script>
@@ -837,16 +811,24 @@
         form.addEventListener('submit', (e) => {
           e.preventDefault();
           const input = form.querySelector('input[name="email"]');
-          const val = (input && input.value || '').trim();
+          const val = (input && input.value.trim()) || '';
           const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
           if (!re.test(val)) {
-            if (status) { status.textContent = 'Please enter a valid email address.'; status.className = 'text-xs text-rose-600 mt-2'; }
+            if (status) {
+              status.textContent = 'Please enter a valid email address.';
+              status.className = 'text-xs text-rose-600 mt-2';
+            }
             showTemp('Please enter a valid email', 'error', 3000);
             return;
           }
-          if (status) { status.textContent = 'Thanks — you\\'re subscribed!'; status.className = 'text-xs text-emerald-700 mt-2'; }
+          if (status) {
+            status.textContent = 'Thanks — you\'re subscribed!';
+            status.className = 'text-xs text-emerald-700 mt-2';
+          }
           showTemp('Subscribed — check your inbox!', 'info', 3000);
-          setTimeout(()=>{ if (input) input.value = ''; }, 800);
+          setTimeout(() => {
+            if (input) { input.value = ''; }
+          }, 800);
         });
       } catch (e) { console.warn('newsletter init failed', e); }
     })();
@@ -869,9 +851,7 @@
     })();
   
   })(); // end site init
-  </script>
-  
-  
+</script>
 
 </body>
 </html>

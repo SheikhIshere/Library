@@ -171,7 +171,7 @@ class BookCreateView(LoginRequiredMixin, CreateView):
 class BookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Books
     form_class = EditBooksForm
-    template_name = 'books/book_form.html'
+    template_name = 'books/book_form_edit.html'
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
 

@@ -27,7 +27,7 @@ class Books(models.Model):
     title = models.CharField(max_length=100)
     tag = models.ManyToManyField(Tag, blank=True)
     author = models.CharField(max_length=100)
-    description = models.TextField()
+    description = models.CharField(max_length=1000)
     upload_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
     slug = models.SlugField(max_length=100, unique=True)
@@ -57,7 +57,7 @@ class Books(models.Model):
         elif self.visibility == "private":
             return user == self.uploader
         elif self.visibility == "unlisted":
-            return True  # anyone with link can access, logic handled in views
+            return True  # anyone with  link can access, logic handled in views
         return False
     
     # Total number of likes
