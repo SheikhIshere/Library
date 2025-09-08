@@ -1,101 +1,283 @@
 {% extends "base.html" %}
+{% load humanize %}
+
 
 {% block title %}{{ profile.user.username }} — Profile{% endblock %}
 
 {% block content %}
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
-  <!-- HERO -->
-  <header class="bg-white dark:bg-slate-900 rounded-3xl shadow-lg overflow-hidden p-6 md:p-8 grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
-    <!-- Avatar & quick badges -->
-    <div class="flex items-start gap-4 md:col-span-1">
-      <div class="flex-shrink-0">
-        {% if profile.avatar %}
-          <img src="{{ profile.avatar.url }}" alt="{{ profile.user.username }} avatar"
-               class="w-28 h-28 md:w-36 md:h-36 rounded-2xl object-cover shadow-md border border-slate-100 dark:border-slate-800" loading="lazy">
-        {% else %}
-          <div class="w-28 h-28 md:w-36 md:h-36 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-white text-3xl font-extrabold shadow-md">
-            {{ profile.user.username|slice:":1"|upper }}
+<!-- HERO -->
+<header class="bg-white dark:bg-slate-900 rounded-3xl shadow-lg overflow-hidden p-6 md:p-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 items-start">
+    
+    <!-- Left Column: Avatar & Profile Identity -->
+    <div class="flex flex-col md:flex-row items-start gap-4 md:col-span-1">
+      <!-- Avatar Container -->
+      <div class="premium-frame" role="img" aria-label="{{ profile.user.username }} portrait" tabindex="-1">
+        <div class="premium-bezel">
+          <div class="frame-size">
+            {% if profile.avatar %}
+              <img
+                src="{{ profile.avatar.url }}"
+                alt="{{ profile.user.username }} avatar"
+                width="144" height="144"
+                class="w-full h-full rounded-2xl object-cover"
+                loading="lazy">
+            {% else %}
+              <div class="initials rounded-2xl">
+                {{ profile.user.username|slice:":1"|upper }}
+              </div>
+            {% endif %}
           </div>
-        {% endif %}
+        </div>
       </div>
 
-      <div class="flex-1">
+      <!-- Profile Identity -->
+      <div class="flex-1 min-w-0">
         <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
           {{ profile.name|default:profile.user.username }}
         </h1>
         <p class="text-sm text-slate-500 dark:text-slate-300 mt-1">@{{ profile.user.username }}</p>
 
+        <!-- Badges -->
         <div class="mt-3 flex flex-wrap items-center gap-2">
+          {# Verified / Not verified badge #}
           {% if profile.is_varified %}
-            <span class="inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-              ✅ Verified
+            <span
+              class="inline-flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-blue-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold shadow-sm"
+              title="Verified account" role="status" aria-label="Verified account">
+              <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" fill="currentColor" />
+                <path d="M9.2 12.8l1.9 1.9 4.7-6.3" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span>Verified</span>
+            </span>
+          {% else %}
+            <span
+              class="inline-flex items-center gap-2 bg-red-50 text-red-700/95 px-3 py-1 rounded-full text-sm font-semibold shadow-sm"
+              title="Not verified" role="status" aria-label="Not verified">
+              <svg class="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.5" opacity="0.9"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor" opacity="0.95"/>
+              </svg>
+              <span class="text-slate-700 dark:text-slate-300">Not verified</span>
             </span>
           {% endif %}
 
+          <!-- Coin badge -->
           <span class="inline-flex items-center gap-2 bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full text-sm font-medium shadow-sm">
-            💰 {{ profile.balance|default:"0" }} tokens
+            💰
+            <span
+              class="inline-block max-w-[6.5rem] md:max-w-[9rem] truncate"
+              title="{{ profile.balance|default:'0'|intcomma }}">
+              {{ profile.balance|default:"0"|intcomma }} tokens
+            </span>
           </span>
 
+          <!-- Age badge -->
           {% if profile.age %}
-            <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-700 dark:text-slate-300 shadow-sm">
-              🎂 {{ profile.age }} yrs
+            <span
+              class="inline-flex items-center gap-3 px-3 py-1 rounded-full text-sm font-semibold shadow-sm
+                     bg-gradient-to-r from-white/80 to-slate-50 dark:from-slate-800/60 dark:to-slate-900/40
+                     border border-slate-100 dark:border-slate-800 text-slate-800 dark:text-slate-100
+                     hover:translate-y-0.5 transform transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300/40"
+              role="status"
+              aria-label="Age: {{ profile.age }} years"
+              title="Age: {{ profile.age }} years">
+              <svg class="w-4 h-4 flex-shrink-0 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <rect x="4" y="9" width="16" height="6" rx="1.2" fill="currentColor" opacity="0.95"/>
+                <path d="M4 10.5c1.8-1.2 3.6-1.2 5.4 0 1.8-1.2 3.6-1.2 5.4 0V12h-10.8V10.5z" fill="#ffffff" opacity="0.92"/>
+                <ellipse cx="12" cy="16.6" rx="6.4" ry="0.9" fill="rgba(2,6,23,0.06)"/>
+                <rect x="11.4" y="4.6" width="1.2" height="3.4" rx="0.25" fill="#F59E0B"/>
+                <path d="M12 4.1c.25-.33.64-.6.64-1 0-.5-.4-.9-.64-1-.24.1-.64.5-.64 1 0 .4.39.67.64 1z" fill="#FBBF24"/>
+              </svg>
+              <span class="leading-none">
+                <span class="text-sm">{{ profile.age }}</span>
+                <span class="ml-1 text-xs text-slate-500 dark:text-slate-300">yrs</span>
+              </span>
             </span>
           {% endif %}
         </div>
 
-        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm">
-          <a class="text-slate-500 dark:text-slate-300 hover:text-indigo-600" href="mailto:{{ profile.user.email }}">{{ profile.user.email }}</a>
-          {% if profile.phone %}<span class="text-slate-400">·</span><span class="text-slate-500">{{ profile.phone }}</span>{% endif %}
+        <!-- Contact Info -->
+        <div class="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          <!-- Email -->
+          <a
+            href="mailto:{{ profile.user.email }}"
+            class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
+                   bg-white/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800
+                   text-slate-700 dark:text-slate-200 shadow-sm hover:translate-y-0.5 hover:shadow-md
+                   transition-transform duration-150"
+            title="Email {{ profile.user.email }}"
+            aria-label="Email {{ profile.user.email }}">
+            <svg class="w-4 h-4 flex-shrink-0 text-indigo-600 dark:text-indigo-300" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2.5" y="4.5" width="19" height="15" rx="2" stroke="currentColor" stroke-width="1.3"/>
+              <path d="M3.8 6.6l7.6 5.1 7.6-5.1" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="inline-block max-w-[18rem] truncate">{{ profile.user.email }}</span>
+          </a>
+          
+          {% if profile.phone %}            
+            <!-- Phone -->
+            <a
+              href="tel:{{ profile.phone }}"
+              class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm font-medium
+                     bg-white/80 dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800
+                     text-slate-700 dark:text-slate-200 shadow-sm hover:translate-y-0.5 hover:shadow-md
+                     transition-transform duration-150"
+              title="Call {{ profile.phone }}"
+              aria-label="Phone {{ profile.phone }}">
+              <svg class="w-4 h-4 flex-shrink-0 text-amber-600 dark:text-amber-400" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.86 19.86 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.86 19.86 0 0 1 2.08 4.18 2 2 0 0 1 4 2h3a2 2 0 0 1 2 1.72c.12.84.37 1.66.73 2.43a2 2 0 0 1-.45 2.11L8.9 9.9a16.05 16.05 0 0 0 6 6l1.63-1.63a2 2 0 0 1 2.11-.45c.77.36 1.59.61 2.43.73A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.15" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="inline-block max-w-[12rem] truncate">{{ profile.phone }}</span>
+            </a>
+          {% endif %}
         </div>
       </div>
     </div>
 
-    <!-- Compact stats (center on desktop) -->
-    <div class="md:col-span-1 flex items-center justify-center">
-      <div class="w-full grid grid-cols-3 gap-2 md:gap-4">
-        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <div class="text-xs text-slate-400">Uploads</div>
-          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ uploaded_books|length }}</div>
+    <!-- Center Column: Stats -->
+    <div class="md:col-span-1 flex items-center justify-center mt-4 md:mt-0">
+      <div class="w-full grid grid-cols-3 gap-3 md:gap-4">
+        <!-- Uploads -->
+        <div
+          role="group"
+          aria-label="Uploads"
+          class="relative text-center p-3 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 bg-gradient-to-b from-white/80 dark:from-slate-900/60 to-white/60 dark:to-slate-900/40 backdrop-blur-sm hover:-translate-y-1 transform transition-all duration-200">
+          <div class="flex items-center justify-center">
+            <svg aria-hidden="true" class="w-5 h-5 text-indigo-600 dark:text-indigo-300" viewBox="0 0 24 24" fill="none">
+              <path d="M4 19.5A2 2 0 0 1 6 17.5H20" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 6.5A2 2 0 0 1 6 4.5H20V20.5H6A2 2 0 0 1 4 18.5V6.5Z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="text-xs text-slate-400 mt-2">Uploads</div>
+          <div class="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 flex items-baseline justify-center gap-2">
+            <span
+              class="inline-block max-w-[7rem] md:max-w-[9rem] truncate"
+              title="{{ uploaded_books|length }}">
+              {{ uploaded_books|length }}
+            </span>
+          </div>
         </div>
 
-        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <div class="text-xs text-slate-400">Favorites</div>
-          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ related_stats.favorites_count|default:"0" }}</div>
+        <!-- Favorites -->
+        <div
+          role="group"
+          aria-label="Favorites"
+          class="relative text-center p-3 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 bg-gradient-to-b from-white/80 dark:from-slate-900/60 to-white/60 dark:to-slate-900/40 backdrop-blur-sm hover:-translate-y-1 transform transition-all duration-200">
+          <div class="flex items-center justify-center">
+            <svg aria-hidden="true" class="w-5 h-5 text-rose-500 dark:text-rose-400" viewBox="0 0 24 24" fill="none">
+              <path d="M20.8 7.6c0 5.2-8.8 11.3-8.8 11.3S3.2 12.8 3.2 7.6A4 4 0 0 1 7.2 3.6c1.6 0 3.1.9 3.6 2.2.5-1.3 2-2.2 3.6-2.2a4 4 0 0 1 4 4z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+          </div>
+          <div class="text-xs text-slate-400 mt-2">Favorites</div>
+          <div class="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 flex items-baseline justify-center gap-2">
+            <span
+              class="inline-block max-w-[7rem] md:max-w-[9rem] truncate"
+              title="{{ related_stats.favorites_count|default:'0' }}">
+              {{ related_stats.favorites_count|default:"0" }}
+            </span>
+            <span class="text-sm text-slate-400">♥</span>
+          </div>
         </div>
 
-        <div class="text-center p-3 bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-800">
-          <div class="text-xs text-slate-400">Avg Rating</div>
-          <div class="text-lg font-semibold text-slate-900 dark:text-slate-100 mt-1">{{ related_stats.avg_rating|floatformat:1|default:"—" }}</div>
+        <!-- Avg Rating -->
+        <div
+          role="group"
+          aria-label="Average rating"
+          class="relative text-center p-3 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 bg-gradient-to-b from-white/80 dark:from-slate-900/60 to-white/60 dark:to-slate-900/40 backdrop-blur-sm hover:-translate-y-1 transform transition-all duration-200">
+          <div class="flex items-center justify-center">
+            <svg aria-hidden="true" class="w-5 h-5 text-amber-500 dark:text-amber-400" viewBox="0 0 24 24" fill="none">
+              <path d="M12 17.3l-5.8 3.2 1.4-6.3L2.2 9.5l6.4-.6L12 3.2l3.4 5.7 6.4.6-5.4 4.7 1.4 6.3z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div class="text-xs text-slate-400 mt-2">Avg Rating</div>
+          <div class="text-xl md:text-2xl font-extrabold text-slate-900 dark:text-slate-100 mt-1 flex items-baseline justify-center gap-2">
+            <span
+              class="inline-block max-w-[7rem] md:max-w-[9rem] truncate"
+              title="{{ related_stats.avg_rating|floatformat:1|default:'—' }}">
+              {{ related_stats.avg_rating|floatformat:1|default:"—" }}
+            </span>
+            <span class="text-sm text-slate-400">★</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Actions (right column) -->
-    <div class="md:col-span-1 flex flex-col items-end gap-3">
-      <div class="flex items-center gap-2">
+    <!-- Right Column: Actions + Location/Social -->
+    <div class="md:col-span-1 flex flex-col items-start md:items-end gap-4 mt-4 md:mt-0">
+      <!-- Buttons -->
+      <div class="flex flex-wrap items-center gap-2 justify-end w-full">
         {% if user.is_authenticated and user == profile.user %}
           <a href="{% url 'accounts:profile_edit' profile.user.username %}"
-             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium shadow hover:bg-indigo-700">
-            Edit profile
+             class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold shadow-lg
+                    hover:from-indigo-700 hover:to-indigo-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-300 transition-transform duration-150"
+             title="Edit profile" aria-label="Edit profile">
+            <svg class="w-4 h-4 -ml-0.5" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 21v-3.75L16.5 3.75a2.12 2.12 0 0 1 3 0l.75.75a2.12 2.12 0 0 1 0 3L6 21H3z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="leading-none">Edit profile</span>
           </a>
         {% endif %}
 
-        <div class="flex items-center gap-2">
-          <button id="btn-share" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Share profile" aria-label="Share profile">🔗</button>
-          <button id="btn-copy" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Copy profile link" aria-label="Copy profile link">📋</button>
-          <button id="btn-vcard" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 shadow" title="Download vCard" aria-label="Download vCard">📁</button>
-        </div>
+        <!-- Share Button -->
+        <button id="btn-share"
+                class="w-10 h-10 inline-flex items-center justify-center rounded-lg bg-white/85 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800 shadow-sm
+                       hover:shadow-md hover:translate-y-0.5 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                title="Share profile" aria-label="Share profile" type="button">
+          <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-300" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M12 3v12" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8 7l4-4 4 4" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="sr-only">Share profile</span>
+        </button>
+
+        <!-- Copy Button -->
+        <button id="btn-copy"
+                class="w-10 h-10 inline-flex items-center justify-center rounded-lg bg-white/85 dark:bg-slate-900/70 border border-slate-100 dark:border-slate-800 shadow-sm
+                       hover:shadow-md hover:translate-y-0.5 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-200"
+                title="Copy profile link" aria-label="Copy profile link" type="button">
+          <svg class="w-5 h-5 text-slate-700 dark:text-slate-200" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <rect x="8" y="8" width="10" height="10" rx="2" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M16 8V6a2 2 0 0 0-2-2H8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="sr-only">Copy profile link</span>
+        </button>
       </div>
 
-      <div class="text-right text-xs text-slate-500 dark:text-slate-400">
-        <div>{{ profile.address|default:"Location private" }}</div>
+      <!-- Address & Social -->
+      <div class="text-left md:text-right text-xs text-slate-500 dark:text-slate-400 space-y-2 w-full">
+        <div class="inline-flex items-center gap-2 justify-end w-full">
+          <svg class="w-4 h-4 text-slate-400 dark:text-slate-500 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 21s7-4.5 7-10a7 7 0 1 0-14 0c0 5.5 7 10 7 10z" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="11" r="2" fill="currentColor"/>
+          </svg>
+          <span class="inline-block max-w-[18rem] truncate" title="{{ profile.address|default:'Location private' }}">
+            {{ profile.address|default:"Location private" }}
+          </span>
+        </div>
+
         {% if profile.social_link %}
-          <a href="{{ profile.social_link }}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">{{ profile.social_link|cut:"https://"|cut:"http://" }}</a>
+          <div class="inline-flex items-center gap-2 justify-end w-full">
+            <svg class="w-4 h-4 text-indigo-600 dark:text-indigo-300 flex-shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+              <path d="M10 14.5A3.5 3.5 0 1 1 13.5 11" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M21 12a9 9 0 1 0-9 9" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <a href="{{ profile.social_link }}" target="_blank" rel="noopener noreferrer"
+               class="inline-block max-w-[14rem] truncate text-indigo-600 dark:text-indigo-300 hover:underline"
+               title="{{ profile.social_link|cut:'https://'|cut:'http://' }}">
+              {{ profile.social_link|cut:"https://"|cut:"http://" }}
+            </a>
+          </div>
         {% endif %}
       </div>
     </div>
-  </header>
+  </div>
+</header>
+
 
   <!-- TABS: Overview / Books / Reviews / Playlists -->
   <nav class="mt-6">
@@ -398,4 +580,126 @@
     }
   })();
 </script>
+
+
+
+<style>
+
+/* Premium golden frame for avatar - place in base.css or <style> */
+  :root{
+  --gold-light: #fbf1d6;
+  --gold-mid:   #f0c36a;
+  --gold-dark:  #b07b2a;
+  --bezel-light: #ffffff;
+  --bezel-dark:  #0b1220;
+}
+
+/* Primary frame container */
+.premium-frame {
+  display: inline-block;
+  border-radius: 0.75rem; /* matches rounded-2xl */
+  padding: 4px;           /* visual frame thickness */
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-mid) 55%, var(--gold-dark) 100%);
+  box-shadow: 0 10px 30px rgba(2,6,23,0.16), inset 0 2px 0 rgba(255,255,255,0.45);
+  transition: transform .18s ease, box-shadow .18s ease;
+  will-change: transform;
+}
+
+/* gentle lift on hover for pointer devices */
+@media (hover: hover) and (pointer: fine) {
+  .premium-frame:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(2,6,23,0.20); }
+}
+
+/* inner bezel so gold doesn't touch the image */
+.premium-frame .premium-bezel {
+  display: block;
+  border-radius: inherit;
+  overflow: hidden;
+  background: var(--bezel-light);
+  padding: 3px;            /* inner spacing between bezel and image */
+  position: relative;      /* used by ::before highlight */
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -8px 20px rgba(0,0,0,0.03);
+}
+
+/* dark mode bezel */
+.dark .premium-frame .premium-bezel {
+  background: var(--bezel-dark);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), inset 0 -6px 14px rgba(0,0,0,0.35);
+}
+
+/* ensure the image / initials fill the container and keep rounded corners */
+.premium-frame img,
+.premium-frame .initials {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: inherit;
+  -webkit-user-drag: none;
+}
+
+/* sizing container — matches your w-28 / md:w-36 */
+.premium-frame .frame-size {
+  width: 7rem;   /* ~ w-28 */
+  height: 7rem;
+  border-radius: inherit;
+}
+
+/* larger on md+ screens to match md:w-36 */
+@media (min-width: 768px){
+  .premium-frame .frame-size { width: 9rem; height: 9rem; } /* ~md:w-36 */
+}
+
+/* tasteful inner highlight streak (subtle) */
+.premium-frame .premium-bezel::before {
+  content: "";
+  position: absolute;
+  right: 8px;
+  top: 10px;
+  width: 26%;
+  height: 2px;
+  opacity: 0.12;
+  transform: rotate(-18deg);
+  background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(255,255,255,0));
+  pointer-events: none;
+}
+
+/* optional nameplate below the frame (small classy label) */
+.premium-nameplate {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.78rem;
+  padding: 0.28rem 0.6rem;
+  border-radius: 0.5rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(245,243,240,0.92));
+  box-shadow: 0 4px 10px rgba(2,6,23,0.08), inset 0 -1px 0 rgba(0,0,0,0.04);
+  color: #0f172a;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+/* dark mode nameplate */
+.dark .premium-nameplate {
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  color: #e6eef8;
+  box-shadow: 0 6px 18px rgba(2,6,23,0.45);
+}
+
+/* initials fallback look (if no avatar image) */
+.premium-frame .initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.4rem;
+  letter-spacing: .02em;
+  color: white;
+  background: linear-gradient(180deg, rgba(15,23,42,0.85), rgba(63,63,70,0.95));
+}
+
+/* focus accessibility */
+.premium-frame:focus-within { outline: 3px solid rgba(59,130,246,0.18); outline-offset: 3px; }
+
+
+</style>
 {% endblock %}

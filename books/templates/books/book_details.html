@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load humanize %}
+
 
 {% block title %}{{ book.title }}{% endblock %}
 
@@ -6,95 +8,170 @@
 <!-- Container -->
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
 
-  <!-- Top header card -->
-  <section class="mt-8 bg-gradient-to-b from-white/60 to-white/80 dark:from-slate-900/60 dark:to-slate-900/40 rounded-3xl shadow-2xl overflow-hidden grid grid-cols-1 md:grid-cols-3 gap-6 p-6 md:p-8 items-start">
-    <!-- Cover -->
-    <div class="col-span-1 flex justify-center md:justify-start">
-      {% if book.cover_page %}
-        <img
-          src="{{ book.cover_page.url }}"
-          alt="Cover - {{ book.title }}"
-          class="w-48 md:w-56 h-auto rounded-xl object-cover shadow-xl transform transition-all hover:scale-[1.02]"
-          loading="lazy"
-        />
-      {% else %}
-        <div class="w-48 md:w-56 h-72 bg-gradient-to-tr from-gray-100 to-gray-50 rounded-xl flex items-center justify-center text-gray-400 shadow-inner">
-          <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 2v6m0 8v6M2 12h6m8 0h6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/></svg>
-        </div>
-      {% endif %}
-    </div>
-
-    <!-- Details -->
-    <div class="col-span-2 space-y-4">
-      <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
-            {{ book.title }}
-          </h1>
-          <p class="text-sm sm:text-base text-slate-500 dark:text-slate-300 mt-1">
-            By <span class="font-semibold text-slate-700 dark:text-slate-100">{{ book.author }}</span>
-          </p>
-        </div>
-
-        <!-- Price & favorites -->
-        <div class="flex items-center gap-3">
-          <div class="text-right">
-            <p class="text-sm text-slate-500">Price</p>
-            <div class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">
-              {% if book.price == 0 %}
-                Free
-              {% elif book.price > 1 %}
-                {{ book.price }} tokens
-              {% else %}
-                {{ book.price }} token
-              {% endif %}
-            </div>
+  <section class="mt-8 rounded-3xl shadow-2xl overflow-hidden bg-gradient-to-b from-white/60 to-white/80 dark:from-slate-900/60 dark:to-slate-900/40 p-6 md:p-8">
+    <div class="max-w-6xl mx-auto md:flex md:items-start md:gap-8">
+  
+      <!-- LEFT: Cover -->
+      <div class="flex-shrink-0 flex justify-center md:justify-start">
+        {% if book.cover_page %}
+          <img src="{{ book.cover_page.url }}"
+               alt="Cover - {{ book.title }}"
+               class="w-48 md:w-56 rounded-xl object-cover shadow-2xl transform transition-all duration-300 hover:scale-105"
+               loading="lazy">
+        {% else %}
+          <div class="w-48 md:w-56 h-72 rounded-xl bg-gradient-to-tr from-gray-100 to-gray-50 flex items-center justify-center text-gray-400 shadow-lg">
+            <!-- placeholder svg -->
+            <svg class="w-14 h-14 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 2v6m0 8v6M2 12h6m8 0h6M4.93 4.93l4.24 4.24M14.83 14.83l4.24 4.24M4.93 19.07l4.24-4.24M14.83 9.17l4.24-4.24"/>
+            </svg>
           </div>
-
-          <form method="post" action="{% url 'books:toggle_favorite' book.slug %}" class="min-w-[140px]">
-            {% csrf_token %}
-            <button
-              type="submit"
-              class="w-full inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl shadow-lg bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white font-semibold transition-transform transform hover:-translate-y-0.5"
-              aria-pressed="{% if is_favorited %}true{% else %}false{% endif %}"
-            >
-              <span class="text-lg">
-                {% if user.is_authenticated and is_favorited %}
-                  ❤️
+        {% endif %}
+      </div>
+  
+      <!-- RIGHT: Content -->
+      <div class="mt-6 md:mt-0 flex-1">
+  
+        <!-- Top row: Title (left) / Price + Heart (right) -->
+        <div class="flex items-start justify-between gap-4">
+          <div class="pr-4">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">
+              {{ book.title }}
+            </h1>
+          
+            <p class="mt-2 text-sm text-slate-500 dark:text-slate-300">
+              By <span class="font-semibold text-slate-700 dark:text-slate-100">{{ book.author }}</span>
+          
+              {% if book.uploader %}
+                <span class="text-slate-400">,</span>
+                <span class="ml-1 text-sm text-slate-500 dark:text-slate-300">
+                  uploaded by
+                  <a href="{% url 'accounts:profile' username=book.uploader.username %}"
+                     class="font-semibold text-slate-800 dark:text-slate-100 hover:underline"
+                     title="View {{ book.uploader.username }}'s profile">
+                    {{ book.uploader.username|escape }}
+                  </a>
+                </span>
+              {% endif %}
+            </p>
+          </div>
+          
+  
+          <div class="flex items-start gap-4">
+            <!-- Price -->
+            <div class="text-right">
+              <p class="text-sm text-slate-500">Price</p>
+              <div class="mt-1 text-xl sm:text-2xl font-bold text-indigo-600 dark:text-indigo-400">
+                {% if book.price == 0 %}
+                  <span class="inline-block text-green-500">Free</span>
                 {% else %}
-                  🤍
+                  <span class="inline-block">{{ book.price }}</span>
                 {% endif %}
+              </div>
+            </div>
+  
+            <!-- Favorite form (unique IDs) -->
+            <form method="post"
+                  action="{% url 'books:toggle_favorite' book.slug %}"
+                  id="favorite-form-{{ book.id }}"
+                  class="relative inline-block"
+                  data-count="{{ book.total_favorites|default:0 }}"
+                  data-favorited="{% if is_favorited %}1{% else %}0{% endif %}">
+              {% csrf_token %}
+              <button type="submit"
+                      id="favorite-button-{{ book.id }}"
+                      class="w-12 h-12 rounded-xl inline-flex items-center justify-center bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                      aria-pressed="{% if is_favorited %}true{% else %}false{% endif %}"
+                      aria-describedby="like-dot-{{ book.id }}">
+                <!-- heart svg -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                  <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12.1 20.3c-.6-.5-5.9-5.0-7.6-7.0A5.6 5.6 0 0112 5.5c1.7 0 3.2.8 4 2.1.8-1.3 2.3-2.1 4-2.1 1.6 0 3 1.1 3.5 2.6.7 2.2-1.3 5.1-6.4 9.2l-4.9 3z"/>
+                </svg>
+                <span class="sr-only">
+                  {% if is_favorited %}Remove favorite{% else %}Add to favorites{% endif %}
+                </span>
+              </button>
+  
+              <span id="like-dot-{{ book.id }}" class="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-xs bg-white/90 dark:bg-slate-800/90 shadow pointer-events-none"
+                    role="status" aria-live="polite" title="{{ book.total_favorites|intcomma }} favorites">
+                {{ book.total_favorites|default:0 }}
               </span>
-              <span class="text-sm">
-                {% if book.total_favorites %}{{ book.total_favorites }}{% else %}0{% endif %}
-              </span>
-            </button>
-          </form>
+            </form>
+          </div>
         </div>
-      </div>
+  
+        <!-- Description box (full width under top row) -->
+        <div class="mt-6 bg-white/80 dark:bg-slate-900/60 border border-indigo-100 dark:border-indigo-800 rounded-lg p-6 prose prose-slate dark:prose-invert max-w-none">
+          <h2 class="text-lg font-semibold text-indigo-600 dark:text-indigo-300 mb-2">Description</h2>
+          <div class="text-base leading-relaxed text-slate-700 dark:text-slate-200">
+            {{ book.description|linebreaksbr|safe }}
+          </div>
+        </div>
+  
+        <!-- Meta: side-by-side and wrapping -->
+        <div class="mt-4 flex flex-wrap gap-3 items-center">
+          <span class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full text-sm text-slate-700 dark:text-slate-300 shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <title>Upload Date</title>
+              <!-- Calendar -->
+              <rect x="3" y="4" width="18" height="16" rx="2" stroke-width="1.5"/>
+              <path d="M7 2v4M17 2v4M3 9h18" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- Upload arrow -->
+              <path d="M12 15V9" stroke-width="1.5" stroke-linecap="round"/>
+              <path d="M9.5 11.5 12 9l2.5 2.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 16.5h8" stroke-width="1.5" stroke-linecap="round"/>
+              <!-- Clock badge -->
+              <circle cx="18" cy="18" r="3.5" stroke-width="1.5"/>
+              <path d="M18 16.25V18l1 .5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>            
+            Uploaded: {{ book.upload_date|date:"M j, Y" }}
+          </span>
+  
+          <span class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full text-sm text-slate-700 dark:text-slate-300 shadow">
+            {% if book.visibility == 'public' %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <title>Public Visibility</title>
+                <!-- Globe outline -->
+                <circle cx="12" cy="12" r="9" stroke-width="1.5"/>
+                <!-- Latitude lines -->
+                <path d="M3.6 9h16.8M3.6 15h16.8" stroke-width="1.2" stroke-linecap="round"/>
+                <!-- Longitude lines -->
+                <path d="M12 3c2.5 3 2.5 15 0 18M12 3c-2.5 3-2.5 15 0 18" stroke-width="1.2" stroke-linecap="round"/>
+              </svg>
+              {% elif book.visibility == 'unlisted' %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <title>Unlisted</title>
+                <path d="M10 14a5 5 0 0 1 0-7l2-2a5 5 0 0 1 7 7l-1.5 1.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M14 10a5 5 0 0 1 0 7l-2 2a5 5 0 0 1-7-7l1.5-1.5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              
+              {% else %}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+                <title>Private</title>
+                <rect x="4" y="10" width="16" height="10" rx="2" stroke-width="1.5"/>
+                <path d="M8 10V7a4 4 0 1 1 8 0v3" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>              
+              {% endif %}
 
-      <!-- Description -->
-      <div class="prose prose-slate dark:prose-invert max-w-none text-slate-700">
-        {{ book.description|linebreaks }}
-      </div>
-
-      <!-- Meta -->
-      <div class="flex flex-wrap gap-3 items-center mt-2">
-        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
-          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Uploaded: {{ book.upload_date|date:"M j, Y" }}
-        </span>
-        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
-          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M3 7v10a2 2 0 0 0 2 2h14V5H5a2 2 0 0 0-2 2z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Visibility: {{ book.visibility|capfirst }}
-        </span>
-        <span class="inline-flex items-center gap-2 bg-slate-50 dark:bg-slate-800 px-3 py-1 rounded-full text-sm text-slate-600 dark:text-slate-300 shadow-sm">
-          <svg class="w-4 h-4 text-slate-400" viewBox="0 0 24 24" fill="none"><path d="M12 4.5c4.142 0 7.5 3.358 7.5 7.5s-3.358 7.5-7.5 7.5S4.5 16.142 4.5 12 7.858 4.5 12 4.5z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Avg rating: <span class="ml-1 font-semibold text-slate-800 dark:text-slate-100">{{ book.average_rating|floatformat:1 }}</span>
-        </span>
+              Visibility: {{ book.visibility|capfirst }}
+          </span>
+  
+          <span class="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2 rounded-full text-sm text-slate-700 dark:text-slate-300 shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+              <title>Rating Star</title>
+              <path d="M12 3.5l2.3 4.7 5.2.8-3.8 3.7.9 5.2L12 15.8l-4.6 2.4.9-5.2-3.8-3.7 5.2-.8L12 3.5z" 
+                    stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>            
+            Avg rating: <span class="ml-1 font-semibold text-slate-800 dark:text-slate-100">{{ book.average_rating|floatformat:1 }}</span>
+          </span>
+        </div>
+  
       </div>
     </div>
   </section>
+  
+  
 
   <!-- BIG GRID: PDF viewer / rating & comments -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
@@ -102,7 +179,21 @@
     <!-- Main: PDF Viewer (large, occupies two columns on lg) -->
     <article class="lg:col-span-2 bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden">
       <div class="p-5 md:p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between gap-3">
-        <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">📖 Read / Preview</h3>
+        <div class="flex items-center space-x-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true">
+            <title>Preview Document</title>
+            <!-- Document outline -->
+            <rect x="4" y="3" width="16" height="18" rx="2" stroke-width="1.5"/>
+            <path d="M8 7h8M8 11h8" stroke-width="1.2" stroke-linecap="round"/>
+            <!-- Eye (centered lower in the document) -->
+            <path d="M7 16s2.5-3 5-3 5 3 5 3-2.5 3-5 3-5-3-5-3z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="16" r="1.5" stroke-width="1.5"/>
+          </svg>
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            Read / Preview
+          </h3>
+        </div>
+        
 
         <div class="flex items-center gap-3">
           <span class="text-sm text-slate-600 dark:text-slate-300">Page <span id="page-num">1</span> / <span id="page-count">0</span></span>
@@ -110,28 +201,59 @@
       </div>
 
       <!-- Toolbar overlay -->
-      <div class="p-4 md:p-6 flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 bg-gradient-to-b from-white/60 dark:from-slate-900/60">
-        <div class="flex items-center gap-2">
-          <button id="prev" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md">
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Prev
-          </button>
-          <button id="next" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md">
-            Next
-            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
-
-        <div class="ml-auto flex items-center gap-3">
-          <button id="zoom-out" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm">−</button>
-          <div class="text-sm text-slate-700 dark:text-slate-300 font-medium px-2">Zoom</div>
-          <button id="zoom-in" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm">+</button>
-          <a href="{{ book.book_file.url }}" class="ml-3 inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-md">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none"><path d="M12 3v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Download
-          </a>
+      <div class="p-4 md:p-6 bg-gradient-to-b from-white/60 dark:from-slate-900/60 rounded-md">
+        <div class="flex items-center justify-between gap-3">
+          <!-- LEFT: Prev / Next -->
+          <div class="flex items-center gap-2">
+            <button id="prev"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                    aria-label="Previous page">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Prev
+            </button>
+      
+            <button id="next"
+                    class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-800 text-white hover:bg-slate-900 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                    aria-label="Next page">
+              Next
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+      
+          <!-- CENTER: Download -->
+          <div class="flex justify-center flex-1">
+            <a href="{{ book.book_file.url }}"
+               download
+               rel="noopener"
+               class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+               aria-label="Download book">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M12 3v12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M8 11l4 4 4-4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              Download
+            </a>
+          </div>
+      
+          <!-- RIGHT: Zoom -->
+          <div class="flex items-center gap-3">
+            <button id="zoom-out"
+                    class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                    aria-label="Zoom out">−</button>
+      
+            <div class="text-sm text-slate-700 dark:text-slate-300 font-medium px-2">Zoom</div>
+      
+            <button id="zoom-in"
+                    class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-400"
+                    aria-label="Zoom in">+</button>
+          </div>
         </div>
       </div>
+      
 
       <!-- PDF Canvas container -->
       <div id="pdf-container" class="min-h-[420px] md:min-h-[520px] p-4 md:p-6 flex items-center justify-center bg-gradient-to-b from-slate-50 dark:from-transparent">
@@ -145,84 +267,182 @@
     <aside class="space-y-6">
 
       <!-- Rating card -->
-      <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
-        <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">⭐ Rate this book</h4>
+      <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 shadow-2xl max-w-md mx-auto">
+        <h4 class="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-3">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-yellow-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+          </svg>
+          Rate this book
+        </h4>
+      
         <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Share your rating — one per account.</p>
-
-        <form method="post" action="{% url 'books:rate_book' book.slug %}" class="mt-4" novalidate>
+      
+        <form method="post" action="{% url 'books:rate_book' book.slug %}" class="mt-5" novalidate>
           {% csrf_token %}
-          <!-- Hidden input to submit numeric rating -->
-          <input type="hidden" name="rating" id="rating-input" value="0">
-
-          <!-- Star visual -->
-          <div class="flex items-center gap-2 mt-2" role="radiogroup" aria-label="Star rating">
-            {% comment %} Stars are interactive with JS below. {% endcomment %}
-            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="1" aria-checked="false" aria-label="1 star">
-              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+          <!-- Set this value server-side to the existing rating (0 if none) -->
+          <input type="hidden" name="rating" id="rating-input" value="{{ user_rating|default:0 }}">
+      
+          <!-- accessible sr-only announcement for screen readers -->
+          <div id="rating-feedback" class="sr-only" aria-live="polite"></div>
+      
+          <!-- Stars -->
+          <div class="mt-4">
+            <div class="flex items-center gap-2" role="radiogroup" aria-label="Star rating">
+              <!-- 5 explicit buttons for clarity -->
+              <button type="button" class="star-btn relative p-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 transition-transform"
+                      data-value="1" aria-checked="false" aria-label="1 star" title="1 star" role="radio">
+                <svg class="w-8 h-8 star transform transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+                </svg>
+              </button>
+      
+              <button type="button" class="star-btn relative p-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 transition-transform"
+                      data-value="2" aria-checked="false" aria-label="2 stars" title="2 stars" role="radio">
+                <svg class="w-8 h-8 star transform transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+                </svg>
+              </button>
+      
+              <button type="button" class="star-btn relative p-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 transition-transform"
+                      data-value="3" aria-checked="false" aria-label="3 stars" title="3 stars" role="radio">
+                <svg class="w-8 h-8 star transform transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+                </svg>
+              </button>
+      
+              <button type="button" class="star-btn relative p-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 transition-transform"
+                      data-value="4" aria-checked="false" aria-label="4 stars" title="4 stars" role="radio">
+                <svg class="w-8 h-8 star transform transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+                </svg>
+              </button>
+      
+              <button type="button" class="star-btn relative p-2 rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-indigo-400 transition-transform"
+                      data-value="5" aria-checked="false" aria-label="5 stars" title="5 stars" role="radio">
+                <svg class="w-8 h-8 star transform transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+      
+          <!-- Actions -->
+          <div class="mt-5 flex gap-3">
+            <button id="submit-rating" type="submit"
+                    class="flex-1 px-5 py-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 text-white font-semibold hover:from-indigo-700 hover:to-indigo-600 shadow-lg transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed">
+              Submit
             </button>
-            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="2" aria-checked="false" aria-label="2 stars">
-              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="3" aria-checked="false" aria-label="3 stars">
-              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="4" aria-checked="false" aria-label="4 stars">
-              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
-            </button>
-            <button type="button" class="star-btn p-2 rounded-md hover:bg-slate-100 dark:hover:bg-slate-700" data-value="5" aria-checked="false" aria-label="5 stars">
-              <svg class="w-6 h-6 star" viewBox="0 0 24 24" fill="none"><path d="M12 17.27L18.18 21 16.54 13.97 22 9.24 14.81 8.63 12 2 9.19 8.63 2 9.24 7.46 13.97 5.82 21z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/></svg>
+      
+            <button type="button" id="reset-rating"
+                    class="px-4 py-2 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200">
+              Reset
             </button>
           </div>
-
-          <div class="mt-4 flex gap-2">
-            <button type="submit" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 shadow">Submit</button>
-            <button type="button" id="reset-rating" class="px-3 py-2 rounded-lg bg-slate-100 dark:bg-slate-800">Reset</button>
-          </div>
-        </form>
+        </form>      
+      </div>
+      
 
         <p class="text-sm text-slate-500 mt-3">Average: <span class="font-semibold text-slate-800 dark:text-slate-100">{{ book.average_rating|floatformat:1 }}</span> • <span class="text-slate-600 dark:text-slate-300">{{ book.total_ratings }} ratings</span></p>
       </div>
-
-      <!-- Comments card -->
+      {% load humanize %}
+      <!-- Comments card (improved UI/UX) -->
       <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
-        <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">💬 Comments</h4>
-        <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Join the conversation — be respectful and helpful.</p>
-
+        <div class="flex items-start justify-between gap-4">
+          <div>
+            <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <span class="text-base">💬</span>
+              Comments
+            </h4>
+            <p class="text-sm text-slate-600 dark:text-slate-300 mt-1">Join the conversation — be respectful and helpful.</p>
+          </div>
+      
+          <!-- comment count badge -->
+          <div class="hidden sm:flex items-center text-sm px-3 py-1 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
+            <span class="font-semibold mr-2">{{ book.comment_set.count }}</span>
+            <span class="text-xs">comments</span>
+          </div>
+        </div>
+      
         <!-- List -->
-        <div class="mt-4 space-y-3 max-h-[360px] overflow-auto pr-2">
+        <div class="mt-4 space-y-3 max-h-[360px] overflow-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
           {% for comment in book.comment_set.all %}
-            <div class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800">
-              <div class="flex items-start justify-between gap-3">
-                <div class="flex items-center gap-3">
-                  <div class="w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold">
+            <article class="p-3 rounded-lg border border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 hover:shadow-sm transition-shadow" aria-labelledby="comment-{{ comment.id }}-user">
+              <div class="flex items-start gap-3">
+                <!-- avatar (fallback to initial) -->
+                {% if comment.user.profile.avatar %}
+                  <img src="{{ comment.user.profile.avatar.url }}" alt="{{ comment.user.username }}'s avatar"
+                       class="w-10 h-10 rounded-full object-cover flex-shrink-0" loading="lazy" decoding="async">
+                {% else %}
+                  <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold flex-shrink-0">
                     {{ comment.user.username|slice:":1"|upper }}
                   </div>
-                  <div>
-                    <div class="text-sm font-semibold text-slate-800 dark:text-slate-100">{{ comment.user.username }}</div>
-                    <div class="text-xs text-slate-500 dark:text-slate-300">{{ comment.created_at|date:"M j, Y H:i" }}</div>
-                  </div>
+                {% endif %}
+      
+                <div class="flex-1">
+                  <header class="flex items-center justify-between gap-3">
+                    <div>
+                      <div id="comment-{{ comment.id }}-user" class="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <a href="{% url 'accounts:profile' username=comment.user.username %}">{{ comment.user.username|escape }}</a>
+
+                      </div>
+                      <div class="text-xs text-slate-500 dark:text-slate-300">
+                        <!-- show relative time when humanize available, otherwise show full date -->
+                        {% if comment.created_at %}
+                          {{ comment.created_at|naturaltime }} · <time datetime="{{ comment.created_at|date:'c' }}" class="sr-only">{{ comment.created_at|date:"M j, Y H:i" }}</time>
+                        {% endif %}
+                      </div>
+                    </div>
+      
+                    <!-- optional small actions (like, reply) - kept subtle -->
+                    <div class="flex items-center gap-2">
+                      <button type="button" class="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 transition-opacity" aria-label="Like comment {{ comment.id }}">
+                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 12v8H4v-8" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                      </button>
+                    </div>
+                  </header>
+      
+                  <p id="comment-{{ comment.id }}" class="mt-3 text-slate-700 dark:text-slate-200 text-sm leading-relaxed break-words">
+                    {{ comment.comment|linebreaksbr|escape }}
+                  </p>
                 </div>
               </div>
-
-              <p class="mt-3 text-slate-700 dark:text-slate-200 text-sm leading-relaxed">{{ comment.comment }}</p>
-            </div>
+            </article>
           {% empty %}
-            <div class="text-sm text-slate-500">No comments yet — be the first to leave one.</div>
+            <div class="text-sm text-slate-500">No comments yet — be the first to leave one and help others discover this book.</div>
           {% endfor %}
         </div>
-
+      
         <!-- Add comment form -->
         <div class="mt-4">
           {% if user.is_authenticated %}
-            <form method="post" action="{% url 'books:add_comment' book.slug %}">
+            <form method="post" action="{% url 'books:add_comment' book.slug %}" id="comment-form" class="mt-2">
               {% csrf_token %}
-              <label for="comment" class="sr-only">Add a comment</label>
-              <textarea id="comment" name="comment" rows="3" required
-                        class="w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                        placeholder="Write a thoughtful comment..."></textarea>
-              <div class="mt-3 flex items-center justify-between gap-3">
-                <div class="text-xs text-slate-500">Be kind — follow community guidelines.</div>
-                <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow">Post comment</button>
+              <div class="flex items-start gap-3">
+                <!-- current user avatar -->
+                {% if user.profile.avatar %}
+                  <img src="{{ user.profile.avatar.url }}" alt="{{ user.username }}'s avatar" class="w-10 h-10 rounded-full object-cover flex-shrink-0" loading="lazy" decoding="async">
+                {% else %}
+                  <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-semibold flex-shrink-0">
+                    {{ user.username|slice:":1"|upper }}
+                  </div>
+                {% endif %}
+      
+                <div class="flex-1">
+                  <label for="comment" class="sr-only">Write a comment</label>
+                  <textarea id="comment" name="comment" rows="3" maxlength="1000" required
+                            class="w-full resize-none rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm text-slate-800 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-400 transition-colors"
+                            placeholder="Write a thoughtful comment..." aria-describedby="comment-help"></textarea>
+      
+                  <div class="mt-3 flex items-center justify-between gap-3">
+                    <div id="comment-help" class="text-xs text-slate-500">Be kind — follow community guidelines.</div>
+                    <div class="flex items-center gap-2">
+                      <div id="char-count" class="text-xs text-slate-400">0 / 1000</div>
+                      <button type="submit" id="post-comment" class="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white shadow disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                        Post
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </form>
           {% else %}
@@ -232,8 +452,10 @@
           {% endif %}
         </div>
       </div>
+      
+      
 
-      <!-- Related (optional) -->
+      <!-- Related (under construction) -->
       {% if related_books %}
       <div class="bg-white dark:bg-slate-900 rounded-2xl p-5 shadow-lg">
         <h4 class="text-lg font-semibold text-slate-900 dark:text-slate-100">Related books</h4>
@@ -420,11 +642,255 @@ canvasWrap.addEventListener('touchend', (e) => {
   // initialize (if user has an existing rating, the server could inject it; default 0)
   setStars(0);
 })();
+
+
+document.addEventListener('DOMContentLoaded', function () {
+  const form = document.getElementById('favorite-form');
+  if (!form) return;
+
+  const btn = document.getElementById('favorite-button');
+  const dot = document.getElementById('like-dot');
+
+  // Read server-provided data attributes
+  const rawCountStr = (form.dataset.count || '0').toString();
+  const humanFull = form.dataset.countFull || rawCountStr;
+  let liked = form.dataset.favorited === '1';
+
+  // Abbreviate & format counts safely (supports very large numbers via BigInt when needed)
+  function abbreviate(countStr) {
+    // sanitize digits
+    let s = (countStr + '').replace(/\D/g,'') || '0';
+
+    // small numbers -> exact
+    if (s.length <= 15) {
+      const n = Number(s);
+      if (n < 1000) return String(n);
+      const units = ['K','M','B','T','P','E'];
+      let u = -1;
+      let num = n;
+      while (num >= 1000 && u < units.length - 1) {
+        num = num / 1000;
+        u++;
+      }
+      // show one decimal if needed
+      const rounded = Math.round(num * 10) / 10;
+      return (rounded % 1 === 0 ? String(rounded.toFixed(0)) : String(rounded)) + units[u];
+    }
+
+    // very big numbers -> use BigInt to compute one decimal in unit
+    try {
+      const units = ['K','M','B','T','P','E','Z','Y'];
+      const big = BigInt(s);
+      const exp = s.length - 1;
+      let unitIndex = Math.floor(exp / 3) - 1;
+      if (unitIndex < 0) unitIndex = 0;
+      if (unitIndex >= units.length) return '∞'; // beyond supported units
+      const pow = 1000n ** BigInt(unitIndex + 1);
+      const mantissa = (big * 10n) / pow;   // tenths as integer
+      const intPart = mantissa / 10n;
+      const tenth = mantissa % 10n;
+      if (tenth === 0n) return intPart.toString() + units[unitIndex];
+      return intPart.toString() + '.' + tenth.toString() + units[unitIndex];
+    } catch (err) {
+      // fallback
+      return s.length > 18 ? '∞' : s;
+    }
+  }
+
+  // decide dot classes and content
+  function renderDot(countStr, likedState) {
+    const short = abbreviate(countStr);
+    dot.textContent = short;
+    dot.setAttribute('title', (form.dataset.countFull || countStr) + ' favorites');
+
+    // adjust sizing for multiple characters
+    if (short.length > 3) {
+      dot.classList.add('wide');
+    } else {
+      dot.classList.remove('wide');
+    }
+
+    // liked/unliked styles
+    dot.classList.toggle('liked', !!likedState);
+    dot.classList.toggle('unliked', !likedState);
+  }
+
+  // initial render
+  renderDot(rawCountStr, liked);
+
+  // Optimistic UI: animate & toggle dot visually on click while letting form submit do the real change.
+  btn.addEventListener('click', function (ev) {
+    // small pop animation
+    dot.classList.remove('pop');
+    // toggle optimistic value
+    let currentRaw = (form.dataset.count || '0').replace(/\D/g,'') || '0';
+
+    // convert safely: if small, use Number; else use BigInt math on string
+    let newCountStr;
+    try {
+      if (currentRaw.length <= 15) {
+        newCountStr = String( (Number(currentRaw) || 0) + (liked ? -1 : 1) );
+      } else {
+        // BigInt
+        const big = BigInt(currentRaw);
+        newCountStr = String( big + (liked ? -1n : 1n) );
+      }
+    } catch (e) {
+      // fallback
+      newCountStr = currentRaw;
+    }
+
+    // flip optimistic liked state
+    liked = !liked;
+    form.dataset.count = newCountStr;
+    form.dataset.countFull = (function(s){
+      // produce human readable full via built-in toLocaleString where possible
+      try {
+        if (s.length <= 15) return Number(s).toLocaleString();
+        return s.replace(/\B(?=(\d{3})+(?!\d))/g, ','); // simple comma insert
+      } catch(e) { return s; }
+    })(newCountStr);
+
+    renderDot(newCountStr, liked);
+
+    // pop effect
+    void dot.offsetWidth; // reflow so animation restarts
+    dot.classList.add('pop');
+
+    // allow form to submit normally (server will persist)
+    // If you prefer AJAX, intercept here and send XHR instead of normal submit.
+  });
+
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+        const textarea = document.getElementById('comment');
+        const charCount = document.getElementById('char-count');
+        const postBtn = document.getElementById('post-comment');
+        const MAX = textarea ? parseInt(textarea.getAttribute('maxlength') || '1000', 10) : 1000;
+      
+        if (!textarea) return;
+      
+        function updateSize() {
+          textarea.style.height = 'auto';
+          textarea.style.height = Math.min(textarea.scrollHeight, 240) + 'px';
+        }
+        function updateCount() {
+          const len = textarea.value.trim().length;
+          charCount.textContent = len + ' / ' + MAX;
+          postBtn.disabled = len === 0;
+        }
+      
+        textarea.addEventListener('input', function () {
+          updateSize();
+          updateCount();
+        });
+      
+        // init
+        updateSize();
+        updateCount();
+      
+        // optional: submit on Ctrl+Enter
+        textarea.addEventListener('keydown', function (e) {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter' && !postBtn.disabled) {
+            e.preventDefault();
+            postBtn.click();
+          }
+        });
+      });
 </script>
 
 <style>
 /* small polish: custom scrollbar for comment list */
 #pdf-container::-webkit-scrollbar, .max-h-[360px]::-webkit-scrollbar { height: 8px; width: 10px; }
 #pdf-container::-webkit-scrollbar-thumb, .max-h-[360px]::-webkit-scrollbar-thumb { background: rgba(100,100,100,0.12); border-radius: 999px; }
+
+/* Scale and Heartbeat Animation on Click */
+
+
+/* heart animation */
+/* Container ensures absolute dot aligns relative to button */
+#favorite-form { /* inline-block already set; keep for readability */ }
+
+/* Dot base */
+.like-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;            /* keeps it circular for small counts */
+  height: 20px;
+  padding: 0 6px;             /* allows small two-char numbers */
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  transform-origin: center;
+  transform: translate(35%, -35%);
+  z-index: 20;
+  box-shadow: 0 4px 10px rgba(2,6,23,0.18);
+  transition: all 220ms cubic-bezier(.2,.9,.2,1);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+/* Hollow (not liked): transparent fill, light border, white text so visible on colored button */
+.like-dot.unliked {
+  background: rgba(255,255,255,0);               /* transparent */
+  color: white;
+  border: 2px solid rgba(255,255,255,0.95);
+  backdrop-filter: blur(6px);
+}
+
+/* Filled (liked): white fill, dark text for contrast */
+.like-dot.liked {
+  background: white;
+  color: #0f172a; /* slate-900 */
+  border: 2px solid rgba(255,255,255,0.9);
+}
+
+/* When number is longer, increase width but keep small font */
+.like-dot.wide {
+  padding: 0 8px;
+  font-size: 10px;
+  min-width: 26px;
+  height: 22px;
+}
+
+/* Pop animation when user clicks (optimistic UI) */
+.like-dot.pop {
+  animation: like-pop 420ms cubic-bezier(.2,.9,.2,1);
+}
+@keyframes like-pop {
+  0% { transform: translate(35%, -35%) scale(1); }
+  40% { transform: translate(35%, -35%) scale(1.25); }
+  80% { transform: translate(35%, -35%) scale(0.95); }
+  100% { transform: translate(35%, -35%) scale(1); }
+}
+
+/* Heart pulse on hover (subtle) */
+#favorite-button:hover .heart-icon {
+  animation: heart-pulse 900ms ease-in-out infinite;
+}
+@keyframes heart-pulse {
+  0% { transform: scale(1); opacity: 0.95; }
+  50% { transform: scale(1.08); opacity: 1; }
+  100% { transform: scale(1); opacity: 0.95; }
+}
+/* base empty star stroke (uses currentColor) */
+.star-btn .star { color: var(--star-empty, #94a3b8); stroke: currentColor; }
+  /* filled state */
+  .star-btn.is-filled .star { color: var(--star-filled, #f59e0b); transform: scale(1.08); filter: drop-shadow(0 6px 10px rgba(245,158,11,0.08)); }
+  /* hover preview pop */
+  .star-btn:hover .star { transform: scale(1.12); }
+  /* focus styling */
+  .star-btn:focus-visible { outline: none; }
+  .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+/* Small accessibility helper */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 </style>
 {% endblock %}

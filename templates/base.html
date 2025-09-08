@@ -9,12 +9,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>{% block title %}Genu Library{% endblock %}</title>
 
-  <!-- ====================================================== -->
-  <!-- ================ Tailwind / Icons =================== -->
-  <!-- (CDN builds — your project already uses these)       -->
+  <!-- ====================================================== -->  
+  <!--                              (CDN)                     -->
   <!-- ====================================================== -->
   <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@2.1.2/css/boxicons.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
   <!-- ====================================================== -->
   <!-- ================ THEME / META ======================= -->
@@ -39,8 +40,8 @@
 <body class="bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 antialiased">
 
 <!-- ====================================================== -->
-<!-- ====================================================== -->
 <!-- =================== TOP NAVIGATION =================== -->
+<!-- ====================================================== -->
 
 <header id="site-header" class="bg-white dark:bg-slate-800/60 backdrop-blur sticky top-0 z-50 shadow-sm">
   <div class="site-max mx-auto px-4 sm:px-6 lg:px-8">
@@ -124,20 +125,13 @@
       <div class="flex items-center gap-3">
 
         {% if user.is_authenticated %}
-          <a href="{% url 'books:add_book' %}"
+          <a href="{% url 'books:book_list' %}"
              class="hidden sm:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
              title="Add a new book">
-            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            Add Book
+             <i class="fa-solid fa-list"></i>
+            Show Books
           </a>
 
-          <a href="{% url 'books:add_book' %}"
-             class="sm:hidden inline-flex items-center justify-center h-10 w-10 rounded-lg bg-indigo-600 text-white shadow-md hover:bg-indigo-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-             title="Add book (mobile)">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </a>
         {% endif %}
 
         <!-- Theme toggle -->
@@ -230,56 +224,74 @@
 
 
 
-  <!-- ====================================================== -->
+<!-- ====================================================== -->
 <!-- =================== FLASH / MESSAGES ================== -->
 <!-- ====================================================== -->
-<div class="site-max mx-auto px-4 sm:px-6 lg:px-8 mt-6">
-  <!-- messages container: aria-live so screenreaders are informed -->
-  <div id="django-messages" class="space-y-3" aria-live="polite" role="status">
-    {% if messages %}
-      {% for message in messages %}
-        <!--
-          .flash = our message wrapper
-          data-timeout = milliseconds before auto-dismiss (3s = 3000)
-          role="alert" used for important messages (keeps screen-reader behavior intact)
-        -->
+
+<!-- Toasts Alpine component (stacked to top-right, accessible, pause-on-hover, dismissable) -->
+<div x-data="toastApp()" x-init="init()" aria-live="polite" class="pointer-events-none">
+  <!-- container sits on top-right, uses pointer-events so toasts accept hovers/clicks but do not block page -->
+  <div class="fixed top-5 right-5 z-[9999] flex flex-col items-end gap-3 max-w-sm w-full px-2">
+    <template x-for="toast in toasts" :key="toast.id">
+      <div
+        x-show="toast.visible"
+        x-transition:enter="transform ease-out duration-300"
+        x-transition:enter-start="opacity-0 translate-y-3 scale-95"
+        x-transition:enter-end="opacity-100 translate-y-0 scale-100"
+        x-transition:leave="transform ease-in duration-250"
+        x-transition:leave-start="opacity-100 translate-y-0 scale-100"
+        x-transition:leave-end="opacity-0 translate-y-3 scale-95"
+        @mouseenter="pause(toast)" @mouseleave="resume(toast)"
+        class="pointer-events-auto w-full"
+      >
         <div
-          class="flash rounded-lg p-3 text-sm shadow-sm border flex items-start gap-3
-                 transition transform opacity-100 translate-y-0
-                 duration-200 ease-out
-                 {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
-                 {% elif message.tags == 'error' or message.tags == 'danger' %}bg-rose-50 text-rose-700 border-rose-100
-                 {% else %}bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-100 dark:border-slate-800{% endif %}"
-          role="alert"
-          data-timeout="3000"
+          :class="{
+            'border-emerald-100 bg-emerald-50 text-emerald-800': toast.type==='success',
+            'border-rose-100 bg-rose-50 text-rose-800': toast.type==='error',
+            'border-indigo-100 bg-indigo-50 text-indigo-800': toast.type==='info',
+            'border-slate-100 bg-white dark:bg-slate-900 dark:text-slate-100 text-slate-800': toast.type==='default'
+          }"
+          class="flex items-start gap-3 p-3 rounded-xl shadow-lg border w-full"
+          role="status" :aria-atomic="true"
         >
-          <div class="flex-shrink-0">
-            <!-- icon -->
-            <svg class="w-5 h-5 text-current" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M12 9v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              <circle cx="12" cy="14" r="8" stroke="currentColor" stroke-width="1.2"/>
-            </svg>
+          <!-- icon -->
+          <div class="flex-shrink-0 mt-0.5">
+            <i x-show="toast.type==='success'" class="bx bx-check-circle text-2xl"></i>
+            <i x-show="toast.type==='error'" class="bx bx-error-circle text-2xl"></i>
+            <i x-show="toast.type==='info'" class="bx bx-info-circle text-2xl"></i>
+            <i x-show="toast.type==='default'" class="bx bx-bell text-2xl"></i>
           </div>
 
-          <div class="flex-1">
-            {{ message }}
+          <!-- message -->
+          <div class="flex-1 text-sm leading-snug break-words">
+            <div x-text="toast.text"></div>
+
+            <!-- small progress bar (subtle) -->
+            <div class="mt-2 h-1 w-full bg-slate-100 rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-100 linear"
+                :style="`width: ${toast.progress}%`"
+                :class="{'bg-emerald-400': toast.type==='success','bg-rose-400': toast.type==='error','bg-indigo-400': toast.type==='info','bg-slate-400': toast.type==='default'}"
+              ></div>
+            </div>
           </div>
 
-          <div class="flex-shrink-0">
-            <!-- dismiss button -->
-            <button type="button" class="close-msg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-                    aria-label="Dismiss message" title="Dismiss">
-              &times;
+          <!-- close -->
+          <div class="flex-shrink-0 ml-3">
+            <button @click="dismiss(toast)" class="inline-flex items-center justify-center w-8 h-8 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition focus:outline-none">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 18L18 6M6 6l12 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </div>
         </div>
-      {% endfor %}
-    {% endif %}
+      </div>
+    </template>
   </div>
 </div>
 
 
-  <!-- ====================================================== -->
+
+
+<!-- ====================================================== -->
   <!-- =================== MAIN CONTENT WRAPPER ============== -->
   <!-- ====================================================== -->
   <main class="site-max mx-auto px-4 sm:px-6 lg:px-8 mt-6">
@@ -756,32 +768,28 @@
        FLASH MESSAGES (auto-dismiss + pause on hover + manual close)
        container id: #django-messages (if present)
     ---------------------- */
-    (function flashMessages() {
-      try {
-        const container = document.getElementById('django-messages');
-        if (!container) return;
-        function dismiss(el) {
-          if (!el || el.dataset.dismissing === 'true') return;
-          el.dataset.dismissing = 'true';
-          el.style.transition = 'opacity .18s ease, transform .18s ease';
-          el.style.opacity = '0';
-          el.style.transform = 'translateY(-6px)';
-          el.addEventListener('transitionend', () => { try { el.remove(); } catch (e) {} }, { once: true });
-        }
-  
-        Array.from(container.querySelectorAll('.flash, [role="alert"], .rounded-lg')).forEach(el => {
-          const timeoutMs = parseInt(el.dataset.timeout, 10) || 3000;
-          let timer = setTimeout(() => dismiss(el), timeoutMs);
-          el.addEventListener('pointerenter', () => clearTimeout(timer));
-          el.addEventListener('focusin', () => clearTimeout(timer));
-          el.addEventListener('pointerleave', () => timer = setTimeout(() => dismiss(el), timeoutMs));
-          el.addEventListener('focusout', () => timer = setTimeout(() => dismiss(el), timeoutMs));
-          const closeBtn = el.querySelector('.close-msg');
-          if (closeBtn) closeBtn.addEventListener('click', (ev) => { ev.preventDefault(); dismiss(el); });
-          el.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') dismiss(el); });
-        });
-      } catch (e) { console.warn('flash messages init failed', e); }
-    })();
+    // JavaScript to dismiss the message after a timeout
+document.querySelectorAll('[data-dismiss]').forEach(function(messageElement) {
+  let timeout = messageElement.getAttribute('data-dismiss');
+  setTimeout(function() {
+    messageElement.classList.add('animate-message-dismiss');
+    setTimeout(function() {
+      messageElement.remove();
+    }, 500); // Remove the element after the animation is finished
+  }, timeout);
+});
+
+// Close message button functionality
+document.querySelectorAll('.close-msg').forEach(button => {
+  button.addEventListener('click', function() {
+    const message = this.closest('.flash');
+    message.classList.add('animate-message-dismiss');
+    setTimeout(() => {
+      message.remove();
+    }, 500);
+  });
+});
+
   
   
     /* ----------------------
@@ -853,5 +861,156 @@
   })(); // end site init
 </script>
 
+
+<style>
+
+  /* subtle icon color override to match type */
+  .bx-check-circle { color: #16a34a; }  /* emerald-500 */
+  .bx-error-circle { color: #dc2626; }  /* rose-600 */
+  .bx-info-circle  { color: #2563eb; }  /* indigo-600 */
+  .bx-bell { color: #0f172a; }          /* slate-900 */
+  /* ensure progress bar transitions are smooth */
+  [x-data] .transition { transition: all .18s ease; }
+
+</style>
+
+<!-- Render Django messages into a small JS array -->
+<script>
+  window.DJANGO_MESSAGES = [
+    {% if messages %}
+      {% for message in messages %}
+        {
+          "text": "{{ message|escapejs }}",
+          "tags": "{{ message.tags|default:''|escapejs }}"
+        }{% if not forloop.last %},{% endif %}
+      {% endfor %}
+    {% endif %}
+  ];
+
+  function toastApp() {
+    return {
+      toasts: [],
+      nextId: 1,
+      defaultDuration: 4500, // ms
+      toastInitialized: false, // Add a flag to ensure init() only runs once
+      init() {
+        if (this.toastInitialized) return;  // Prevent re-initialization
+        this.toastInitialized = true;
+
+        try {
+          const server = window.DJANGO_MESSAGES || [];
+          server.forEach(m => {
+            let type = 'default';
+            const tags = (m.tags || '').toLowerCase();
+            if (tags.includes('success')) type = 'success';
+            else if (tags.includes('error') || tags.includes('danger')) type = 'error';
+            else if (tags.includes('info') || tags.includes('notice')) type = 'info';
+            this.pushToast(m.text, { type });
+          });
+        } catch (e) {
+          console.warn('toast init failed', e);
+        }
+      },
+
+      // Add a toast
+      pushToast(text, opts = {}) {
+        const id = this.nextId++;
+        const duration = opts.duration ?? this.defaultDuration;
+        const start = Date.now();
+        const toast = {
+          id,
+          text,
+          type: opts.type || 'default',
+          duration,
+          createdAt: start,
+          expiresAt: start + duration,
+          visible: true,
+          _timeoutId: null,
+          _remaining: duration,
+          progress: 100
+        };
+        this.toasts.push(toast);
+        this.startTimer(toast);
+
+        // Keep stack limited to 5 (oldest removed)
+        if (this.toasts.length > 5) {
+          const oldest = this.toasts[0];
+          this.dismiss(oldest);
+        }
+        return id;
+      },
+
+      // Start/restart timer for a toast
+      startTimer(toast) {
+        if (toast._timeoutId) clearTimeout(toast._timeoutId);
+        const now = Date.now();
+        toast._remaining = Math.max(0, toast.expiresAt - now);
+
+        const startTime = now;
+        const total = toast._remaining;
+        const updateProgress = () => {
+          const elapsed = Date.now() - startTime;
+          toast.progress = Math.round((total - elapsed) / total * 100);
+          if (toast._timeoutId) requestAnimationFrame(updateProgress);
+        };
+
+        toast._timeoutId = setTimeout(() => {
+          this.dismiss(toast);
+        }, toast._remaining);
+        requestAnimationFrame(updateProgress);
+      },
+
+      // Pause timer on hover
+      pause(toast) {
+        if (!toast || !toast._timeoutId) return;
+        clearTimeout(toast._timeoutId);
+        toast._timeoutId = null;
+        toast._remaining = Math.max(0, toast.expiresAt - Date.now());
+      },
+
+      // Resume timer on leave
+      resume(toast) {
+        if (!toast || toast._timeoutId) return;
+        if (toast._remaining <= 0) {
+          this.dismiss(toast);
+          return;
+        }
+        toast.expiresAt = Date.now() + toast._remaining;
+        this.startTimer(toast);
+      },
+
+      // Dismiss toast (animate out)
+      dismiss(toast) {
+        toast.visible = false;
+        if (toast._timeoutId) clearTimeout(toast._timeoutId);
+        toast._timeoutId = null;
+        setTimeout(() => {
+          this.toasts = this.toasts.filter(t => t.id !== toast.id);
+        }, 320);
+      }
+    };
+  }
+
+  // Event listener for launching the toast with one click, preventing multiple toasts
+  let toastInProgress = false;  // Add flag to prevent multiple toasts in a short time
+  document.querySelector('#launch-toast-button').addEventListener('click', function (e) {
+    // Prevent default behavior and multiple clicks
+    e.preventDefault();
+
+    if (toastInProgress) return;  // Prevent multiple toasts
+    toastInProgress = true;
+    
+    const toast = toastApp();
+    toast.pushToast("This is a new toast message!", { type: 'success' });
+
+    // Reset the flag after toast disappears
+    setTimeout(() => {
+      toastInProgress = false;
+    }, 4500); // Matches the toast duration
+  });
+</script>
+
+
+</script>
 </body>
 </html>

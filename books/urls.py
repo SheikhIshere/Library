@@ -24,9 +24,9 @@ urlpatterns = [
     path('', BookListView.as_view(), name='book_list'),
     path('suggestions/', SearchSuggestionsView.as_view(), name='search_suggestions'),
     path('add/', BookCreateView.as_view(), name='add_book'),
+
     path('books_details/<str:slug>/', BookDetailView.as_view(), name='book_detail'),
     path('books_details/<str:slug>/edit/', BookUpdateView.as_view(), name='edit_book'),
-
     # Interactions
     path('books_details/<str:slug>/favorite/', ToggleFavoriteView.as_view(), name='toggle_favorite'),
     path('books_details/<str:slug>/comment/', AddCommentView.as_view(), name='add_comment'),
