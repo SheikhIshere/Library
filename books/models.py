@@ -1,10 +1,9 @@
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 from decimal import Decimal
-from .utils import file_size_check, validate_pdf_check
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
-
 
 
 VISIBILITY_CHOICES = [
@@ -37,8 +36,7 @@ class Books(models.Model):
     book_file = models.FileField(
         upload_to="books/",
         blank=True,
-        null=True,
-        validators=[file_size_check, validate_pdf_check],
+        null=True   
     )
     visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default="public")
     
@@ -50,6 +48,15 @@ class Books(models.Model):
     def __str__(self):
         return self.title
 
+    def clean(self):
+        super().clean()\
+        # Only apply rules if uploader exists and is not 'admin'
+        if getattr(self, 'uploader', None) and self.uploader.username != 'admin':
+            if self.book_file:
+                if self.book_file.size > 25 * 1024 * 1024:  # 25MB
+                    raise ValidationError({"book_file": "File size cannot exceed 25MB."})
+                if not self.book_file.name.lower().endswith(".pdf"):
+                    raise ValidationError({"book_file": "Only PDF files are allowed."})
     # can view
     def can_view(self, user=None):
         if self.visibility == "public":

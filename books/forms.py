@@ -29,10 +29,11 @@ class EditBooksForm(forms.ModelForm):
             'visibility', 
             'price'
         ]
+        
     def clean_cover_page(self):
         file = self.cleaned_data.get('cover_page')
         if file:
-            img_ext = ['.png', '.jpg', '.jpeg', '.webp']
+            img_ext = ('.png', '.jpg', '.jpeg', '.webp')
             if not file.name.lower().endswith(img_ext):
                 raise forms.ValidationError(f"Only image files are allowed: {', '.join(img_ext)}")
             if file.size > 1 * 1024 * 1024:

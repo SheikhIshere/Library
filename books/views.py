@@ -45,7 +45,7 @@ class BookListView(ListView):
     model = Books
     template_name = 'books/book_list.html'
     context_object_name = 'books'
-    paginate_by = 18  # change to taste
+    paginate_by = 12  # change to taste
 
     def get_queryset(self):
         qs = Books.objects.filter(visibility='public').distinct()
@@ -180,7 +180,7 @@ class BookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return book.uploader == self.request.user
 
     def get_success_url(self):
-        return self.object.get_absolute_url()
+        return reverse_lazy('books:book_detail', kwargs={'slug': self.object.slug})
 
 
 # -------------------------

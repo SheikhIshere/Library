@@ -32,6 +32,8 @@ urlpatterns = [
     path('books_details/<str:slug>/comment/', AddCommentView.as_view(), name='add_comment'),
     path('books_details/<str:slug>/rate/', RateBookView.as_view(), name='rate_book'),
     path('books_details/<str:slug>/add_to_playlist/', AddBookToPlaylistView.as_view(), name='add_to_playlist'),
+    path('books_details/<str:slug>/report/', ReportCreateView.as_view(), name='report_book'),
+    
 
     # Tagging
     path('tag/add/', AddTagView.as_view(), name='add_tag'),

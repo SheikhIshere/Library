@@ -78,6 +78,7 @@
                   data-count="{{ book.total_favorites|default:0 }}"
                   data-favorited="{% if is_favorited %}1{% else %}0{% endif %}">
               {% csrf_token %}
+              {% if user.is_authenticated %}
               <button type="submit"
                       id="favorite-button-{{ book.id }}"
                       class="w-12 h-12 rounded-xl inline-flex items-center justify-center bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-600 hover:to-rose-700 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-indigo-400"
@@ -92,12 +93,13 @@
                   {% if is_favorited %}Remove favorite{% else %}Add to favorites{% endif %}
                 </span>
               </button>
-  
+              
               <span id="like-dot-{{ book.id }}" class="absolute -top-2 -right-2 px-2 py-0.5 rounded-full text-xs bg-white/90 dark:bg-slate-800/90 shadow pointer-events-none"
                     role="status" aria-live="polite" title="{{ book.total_favorites|intcomma }} favorites">
                 {{ book.total_favorites|default:0 }}
               </span>
             </form>
+            {% endif %}
           </div>
         </div>
   
@@ -226,6 +228,7 @@
       
           <!-- CENTER: Download -->
           <div class="flex justify-center flex-1">
+            
             <a href="{{ book.book_file.url }}"
                download
                rel="noopener"
@@ -237,6 +240,7 @@
               </svg>
               Download
             </a>
+            
           </div>
       
           <!-- RIGHT: Zoom -->
@@ -263,7 +267,7 @@
       </div>
     </article>
 
-    <!-- Sidebar: Rating + Comments -->
+    <!-- Sidebar: Rating + Comments -->     
     <aside class="space-y-6">
 
       <!-- Rating card -->
