@@ -1,5 +1,5 @@
 from django import forms
-from .models import Books, Comment, BookRating, Tag, Playlist, Report
+from .models import Books, Comment, BookRating, Tag, Playlist, Report, FeaturedBooksModel
 
 # Book Form
 class BooksForm(forms.ModelForm):
@@ -74,3 +74,9 @@ class ReportForm(forms.ModelForm):
     class Meta:
         model = Report
         fields = ['reason', 'description']
+
+
+class FeaturedBooksForm(forms.ModelForm):
+    class Meta:
+        model = FeaturedBooksModel
+        fields = ['book']

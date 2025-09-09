@@ -49,7 +49,7 @@ class Books(models.Model):
         return self.title
 
     def clean(self):
-        super().clean()\
+        super().clean()
         # Only apply rules if uploader exists and is not 'admin'
         if getattr(self, 'uploader', None) and self.uploader.username != 'admin':
             if self.book_file:
@@ -57,7 +57,7 @@ class Books(models.Model):
                     raise ValidationError({"book_file": "File size cannot exceed 25MB."})
                 if not self.book_file.name.lower().endswith(".pdf"):
                     raise ValidationError({"book_file": "Only PDF files are allowed."})
-    # can view
+    # can view    
     def can_view(self, user=None):
         if self.visibility == "public":
             return True
@@ -68,16 +68,22 @@ class Books(models.Model):
         return False
     
     # Total number of likes
+    @property
     def total_favorites(self):
+        """
+        Returns the total number of likes for a book.
+        """
         return self.likes.count()
-
+    
     # Average rating of the book
+    
     def average_rating(self):
         from django.db.models import Avg
         result = self.ratings.aggregate(avg=Avg('rating'))
         return result['avg'] or 0  # returns 0 if no ratings yet
 
     # Total number of ratings
+    @property
     def total_ratings(self):
         return self.ratings.count()
     
@@ -170,3 +176,23 @@ class Report(models.Model):
 
     def __str__(self):
         return f"Report on {self.book.title} by {self.reporter.username}"
+
+
+class FeaturedBooksModel(models.Model):
+    book = models.ForeignKey(Books, on_delete=models.CASCADE)
+    featured_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Featured {self.book.title}"
+    
+    @property
+    def price(self):
+        return self.book.price
+
+    @property
+    def total_rating(self):
+        return self.book.total_rating
+    @property
+    def total_favorites(self):
+        return self.book.total_favorites
+        

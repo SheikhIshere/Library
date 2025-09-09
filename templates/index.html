@@ -277,10 +277,10 @@
 
        {% for b in featured_books %}
        <article
-         data-href="{% url 'books:book_detail' b.slug %}"
+         data-href="{% url 'books:book_detail' b.book.slug %}"
          role="link"
          tabindex="0"
-         aria-label="{{ b.title }} by {{ b.author }}"
+         aria-label="{{ b.book.title }} by {{ b.book.author }}"
          class="snap-start flex-shrink-0 w-64 sm:w-56 md:w-64 transform-gpu transition-transform will-change-transform
                 rounded-xl overflow-hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 cursor-pointer">
      
@@ -289,9 +289,9 @@
      
            <!-- COVER -->
            <div class="relative h-40 md:h-44 overflow-hidden bg-slate-100 dark:bg-slate-800">
-             {% if b.cover_page %}
-               <img src="{{ b.cover_page.url }}"
-                    alt="{{ b.title }}"
+             {% if b.book.cover_page %}
+               <img src="{{ b.book.cover_page.url }}"
+                    alt="{{ b.book.title }}"
                     class="w-full h-full object-cover"
                     loading="lazy" decoding="async">
              {% else %}
@@ -300,7 +300,7 @@
      
              <!-- price badge (top-right) -->
              <div class="absolute top-3 right-3">
-               {% if b.price == 0 %}
+               {% if b.book.price == 0 %}
                  <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">Free</span>
                {% else %}
                  <span class="inline-flex items-center text-xs font-semibold bg-white/90 text-indigo-700 px-2 py-1 rounded-full shadow-sm">{{ b.price }} token</span>
@@ -315,10 +315,10 @@
            <div class="p-3 bg-transparent">
              <!-- keep an actual <a> on the title only for semantics & screen readers -->
              <h3 class="text-sm font-semibold text-slate-900 dark:text-slate-100 truncate">
-               <a href="{% url 'books:book_detail' b.slug %}" class="hover:underline">{{ b.title }}</a>
+               <a href="{% url 'books:book_detail' b.book.slug %}" class="hover:underline">{{ b.book.title }}</a>
              </h3>
      
-             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ b.author }}</p>
+             <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 truncate">{{ b.book.author }}</p>
      
              <div class="mt-3 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                <div class="flex items-center gap-2" aria-hidden="true">

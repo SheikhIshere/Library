@@ -1,6 +1,7 @@
 # books/views.py
-from django.shortcuts import get_object_or_404, redirect, render
-from django.urls import reverse_lazy, reverse
+from django.core.exceptions import PermissionDenied
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -9,11 +10,11 @@ from django.contrib.auth import get_user_model  # ✅ added
 
 from .models import (
     Books, Tag, BookFavorite, Comment, BookRating,
-    Playlist, Report
+    Playlist, Report, FeaturedBooksModel
 )
 from .forms import (
     BooksForm, EditBooksForm, CommentForm, BookRatingForm,
-    TagForm, PlaylistForm, ReportForm
+    TagForm, PlaylistForm, ReportForm, FeaturedBooksForm
 )
 
 from django.db.models import Q, Count
@@ -409,3 +410,17 @@ class SearchSuggestionsView(View):
             pass
 
         return JsonResponse({'results': results[:12]})
+
+
+class FeaturedBooksView(LoginRequiredMixin, CreateView):
+    model = FeaturedBooksModel
+    form_class = FeaturedBooksForm
+    context_object_name = "featured_books"
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied("You do not have permission to access this page.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        return super().form_valid(form)
