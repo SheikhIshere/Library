@@ -41,8 +41,8 @@ urlpatterns = [
     # Playlists
     path('playlists/', PlaylistListView.as_view(), name='playlist_list'),
     path('playlists/add/', PlaylistCreateView.as_view(), name='playlist_add'),
-    path('playlists/<int:pk>/', PlaylistDetailView.as_view(), name='playlist_detail'),
-    path('playlists/<int:pk>/edit/', PlaylistUpdateView.as_view(), name='playlist_edit'),
+    path('playlists/<str:slug>/', PlaylistDetailView.as_view(), name='playlist_detail'),
+    path('playlists/<str:slug>/edit/', PlaylistUpdateView.as_view(), name='playlist_edit'),
 
     # Report
     path('books_details/<str:slug>/report/', ReportCreateView.as_view(), name='report_book'),

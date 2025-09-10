@@ -150,6 +150,7 @@ class BookFavorite(models.Model):
 
 class Playlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="playlists")
+    slug = models.SlugField(max_length=100, unique=True, blank=True, null=True)
     name = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     books = models.ManyToManyField("Books", related_name="in_playlists", blank=True)
@@ -157,6 +158,12 @@ class Playlist(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.user.username})"
+    
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)
+        super().save(*args, **kwargs)
+    
 
 
 REPORT_CHOICES = [

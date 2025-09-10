@@ -261,7 +261,8 @@ class PlaylistDetailView(LoginRequiredMixin, DetailView):
     model = Playlist
     template_name = 'books/playlist_detail.html'
     context_object_name = 'playlist'
-    pk_url_kwarg = 'pk'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
 
     def get_queryset(self):
         return Playlist.objects.filter(user=self.request.user).prefetch_related('books')
@@ -271,6 +272,25 @@ class PlaylistCreateView(LoginRequiredMixin, CreateView):
     model = Playlist
     form_class = PlaylistForm
     template_name = 'books/playlist_form.html'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
+
+    def get_form(self, form_class=None):
+        """Limit the form 'books' field to current user's books."""
+        form = super().get_form(form_class)
+        form.fields['books'].queryset = Books.objects.filter(
+            uploader=self.request.user
+        ).order_by('-upload_date')   # 🔑 fixed here
+        return form
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        # Provide the user_books list used by the template's visual grid & search
+        ctx['user_books'] = Books.objects.filter(
+            uploader=self.request.user
+        ).order_by('-upload_date')
+
+        return ctx
 
     def form_valid(self, form):
         form.instance.user = self.request.user
@@ -280,19 +300,39 @@ class PlaylistCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('books:playlist_list')
 
-
-class PlaylistUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+class PlaylistUpdateView(LoginRequiredMixin, UpdateView):
     model = Playlist
     form_class = PlaylistForm
     template_name = 'books/playlist_form.html'
-    context_object_name = 'playlist'
-    pk_url_kwarg = 'pk'
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
 
-    def test_func(self):
-        return self.get_object().user == self.request.user
+    def get_queryset(self):
+        # ensure user can only edit their own playlists
+        return Playlist.objects.filter(user=self.request.user)
+
+    def get_form(self, form_class=None):
+        """Limit the form 'books' field to current user's books."""
+        form = super().get_form(form_class)
+        form.fields['books'].queryset = Books.objects.filter(
+            uploader=self.request.user
+        ).order_by('-upload_date')   # 🔑 fixed here
+        return form
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['user_books'] = Books.objects.filter(
+            uploader=self.request.user
+        ).order_by('-upload_date')
+
+        return ctx
+
+    def form_valid(self, form):
+        messages.success(self.request, "Playlist updated")
+        return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse_lazy('books:playlist_detail', kwargs={'pk': self.object.pk})
+        return reverse_lazy('books:playlist_list')
 
 
 class AddBookToPlaylistView(LoginRequiredMixin, View):

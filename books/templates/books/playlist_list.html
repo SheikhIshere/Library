@@ -4,57 +4,145 @@
 {% block title %}My Playlists{% endblock %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <!-- Topbar: Title + Search + Actions -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+    <div class="flex items-center gap-4">
+      <!-- Playlist icon -->
+      <div class="flex-shrink-0 p-2 rounded-lg bg-indigo-50 dark:bg-indigo-900/20">
+        <svg class="w-8 h-8 text-indigo-600" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M3 6h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 18h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 6v12a1 1 0 0 1-1 1 1 1 0 0 1-1-1V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
 
-  <!-- Header -->
-  <div class="flex items-center justify-between mb-6">
-    <h1 class="text-2xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-      🎵 My Playlists
-    </h1>
-    <a href="{% url 'books:playlist_add' %}" 
-       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium shadow hover:bg-indigo-700">
-      ➕ Create Playlist
-    </a>
+      <div>
+        <h1 class="text-2xl font-extrabold text-slate-900 dark:text-slate-100 leading-tight">My Playlists</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Collections of books you curated — quick access, shareable, and searchable.</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <div class="relative hidden sm:block">
+        <label for="playlist-search" class="sr-only">Search playlists</label>
+        <input id="playlist-search" name="q" type="search" placeholder="Search playlists, tags, descriptions..." value="{{ request.GET.q|default:'' }}" class="w-64 pl-10 pr-3 py-2 rounded-lg border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" aria-label="Search playlists">
+        <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+
+      <select id="sort" class="text-sm py-2 px-3 rounded-lg border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-indigo-400">
+        <option value="recent" {% if request.GET.sort == 'recent' or not request.GET.sort %}selected{% endif %}>Recently updated</option>
+        <option value="alpha" {% if request.GET.sort == 'alpha' %}selected{% endif %}>Name (A–Z)</option>
+        <option value="books" {% if request.GET.sort == 'books' %}selected{% endif %}>Most books</option>
+      </select>
+
+      <a href="{% url 'books:playlist_add' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-sm font-medium shadow focus:outline-none focus:ring-2 focus:ring-indigo-400">
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Create playlist
+      </a>
+    </div>
   </div>
 
   <!-- Grid of playlists -->
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {% for playlist in playlists %}
-      <article class="p-5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition">
-        <div class="flex items-start justify-between">
-          <h2 class="font-semibold text-slate-900 dark:text-slate-100 truncate">
-            <a href="{% url 'books:playlist_detail' playlist.id %}" class="hover:text-indigo-600">
-              {{ playlist.name }}
-            </a>
-          </h2>
-          <span class="text-xs px-2 py-1 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
-            {{ playlist.books.count }} books
-          </span>
-        </div>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
-          {{ playlist.description|default:"No description" }}
-        </p>
+      <article class="relative group overflow-hidden rounded-2xl border border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm hover:shadow-lg transition">
 
-        <!-- Mini row of book covers -->
-        <div class="mt-4 flex -space-x-2">
-          {% for book in playlist.books.all|slice:":5" %}
-            {% if book.cover_page %}
-              <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" 
-                   class="w-12 h-16 object-cover rounded-md border border-slate-200 dark:border-slate-700">
-            {% else %}
-              <div class="w-12 h-16 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-400 rounded-md border border-slate-200 dark:border-slate-700">📕</div>
-            {% endif %}
-          {% empty %}
-            <div class="text-xs text-slate-400">Empty</div>
-          {% endfor %}
+        <!-- Background accent (subtle) -->
+        <div class="absolute -right-8 -top-8 w-36 h-36 rounded-full bg-indigo-50/60 dark:bg-indigo-900/10 blur-2xl pointer-events-none"></div>
+
+        <div class="relative p-5 md:p-6">
+          <div class="flex items-start gap-3">
+            <div class="flex-shrink-0">
+              <!-- cover-collage: up to 3 thumbnails stacked -->
+              <div class="flex -space-x-2">
+                {% for book in playlist.books.all|slice:":3" %}
+                  {% if book.cover_page %}
+                    <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" loading="lazy" class="w-12 h-16 object-cover rounded-md border border-white shadow-sm">
+                  {% else %}
+                    <div class="w-12 h-16 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-400 rounded-md border border-white">📕</div>
+                  {% endif %}
+                {% empty %}
+                  <div class="w-12 h-16 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-xs text-slate-400 rounded-md border border-white">No books</div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100 truncate">
+                <a href="{% url 'books:playlist_detail' playlist.id %}" class="hover:text-indigo-600">{{ playlist.name }}</a>
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ playlist.description|default:"No description" }}</p>
+            </div>
+
+            <div class="flex flex-col items-end gap-2">
+              <span class="text-xs px-2 py-1 rounded-full bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200">{{ playlist.books.count }} books</span>
+
+              <!-- actions (visible on hover) -->
+              <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <a href="{% url 'books:playlist_detail' playlist.id %}" class="inline-flex items-center gap-2 px-3 py-1 rounded-md bg-indigo-600 text-white text-xs font-medium shadow">Open</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Footer: tags + updated -->
+          <div class="mt-4 flex items-center justify-between text-xs text-slate-400">
+            <div class="flex items-center gap-2 overflow-hidden">
+              {% for tag in playlist.tags.all|slice:":3" %}
+                <span class="px-2 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 truncate">{{ tag.name }}</span>
+              {% endfor %}
+            </div>
+            <div class="whitespace-nowrap">Updated {{ playlist.updated_at|timesince }} ago</div>
+          </div>
+
+          <!-- Hover overlay with quick actions -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+
         </div>
+
+        <!-- Card actions that show on focus (keyboard accessible) -->
+        <div class="absolute right-3 top-3">
+          <div class="relative">
+            <button type="button" aria-haspopup="true" aria-expanded="false" class="p-1 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-400">
+              <svg class="w-5 h-5 text-slate-500" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="5" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="19" r="1.5"/></svg>
+            </button>
+          </div>
+        </div>
+
       </article>
     {% empty %}
-      <div class="col-span-full text-center py-10 text-sm text-slate-500">
-        You don’t have any playlists yet.  
-        <a href="{% url 'books:playlist_add' %}" class="text-indigo-600 hover:underline">Create your first</a>.
+      <div class="col-span-full text-center py-12">
+        <div class="inline-block p-6 rounded-xl bg-slate-50 dark:bg-slate-800">
+          <h3 class="text-lg font-semibold text-slate-900 dark:text-slate-100">No playlists yet</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Create collections to group books you love. They'll appear here for quick access.</p>
+          <a href="{% url 'books:playlist_add' %}" class="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-medium shadow hover:bg-indigo-700">Create your first playlist</a>
+        </div>
       </div>
     {% endfor %}
   </div>
+
+  <!-- Pagination -->
+  {% if is_paginated %}
+  <nav class="mt-8 flex items-center justify-center gap-3" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 rounded-md border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm">Previous</a>
+    {% else %}
+      <span class="px-3 py-2 rounded-md border bg-slate-50 text-slate-300 text-sm">Previous</span>
+    {% endif %}
+
+    <span class="px-3 text-sm text-slate-500">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}" class="px-3 py-2 rounded-md border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm">Next</a>
+    {% else %}
+      <span class="px-3 py-2 rounded-md border bg-slate-50 text-slate-300 text-sm">Next</span>
+    {% endif %}
+  </nav>
+  {% endif %}
+
 </div>
+
+<!-- Small enhancement: submit search on Enter and keep sort param in URL (requires minimal JS if you want instant client-side filtering) -->
+
 {% endblock %}

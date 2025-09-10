@@ -4,54 +4,226 @@
 {% block title %}{% if playlist %}Edit Playlist{% else %}Create Playlist{% endif %}{% endblock %}
 
 {% block content %}
-<div class="max-w-lg mx-auto px-4 sm:px-6 lg:px-8 py-8">
-  <div class="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-lg">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+  <div class="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800">
 
-    <h1 class="text-xl font-bold text-slate-900 dark:text-slate-100 mb-4">
-      {% if playlist %}✏ Edit Playlist{% else %}➕ Create Playlist{% endif %}
-    </h1>
+    <!-- Header -->
+    <div class="flex items-start gap-4">
+      <!-- SVG icon (playlist) -->
+      <div class="flex-shrink-0 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" class="text-indigo-600">
+          <path d="M3 6h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 12h10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 18h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M21 6v12a1 1 0 0 1-1 1 1 1 0 0 1-1-1V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+
+      <div class="flex-1">
+        <h1 class="text-lg sm:text-2xl font-semibold text-slate-900 dark:text-slate-100">{% if playlist %}Edit playlist{% else %}Create playlist{% endif %}</h1>
+        <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Group books into collections, add a description and pick which books belong to this playlist. Works beautifully on desktop and mobile.</p>
+      </div>
+
+      <div class="hidden sm:flex items-center gap-3">
+        <a href="{% url 'books:playlist_list' %}" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-sm text-slate-700 dark:text-slate-200 shadow"> 
+          <!-- back arrow -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Back
+        </a>
+      </div>
+    </div>
+
+    <hr class="my-6 border-slate-100 dark:border-slate-800"/>
 
     {# Non-field errors #}
     {% if form.non_field_errors %}
-      <div class="mb-4 rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
-        {{ form.non_field_errors|join:" " }}
-      </div>
+      <div class="mb-4 rounded-md bg-rose-50 border border-rose-100 p-3 text-sm text-rose-700">{{ form.non_field_errors|join:" " }}</div>
     {% endif %}
 
-    <form method="post" class="space-y-5" novalidate>
+    <form method="post" class="space-y-6" novalidate>
       {% csrf_token %}
 
       <!-- Name -->
       <div>
-        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Name</label>
-        {{ form.name|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" }}
+        <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Name <span class="text-rose-600">*</span></label>
+        {{ form.name|add_class:"mt-2 block w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
         {% if form.name.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.name.help_text }}</p>{% endif %}
-        {% if form.name.errors %}<p class="text-xs text-red-600 mt-1">{{ form.name.errors|join:", " }}</p>{% endif %}
+        {% if form.name.errors %}
+          <p class="text-xs text-rose-600 mt-1">{{ form.name.errors|join:", " }}</p>
+        {% endif %}
       </div>
 
       <!-- Description -->
       <div>
         <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Description</label>
-        {{ form.description|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500" }}
+        {{ form.description|add_class:"mt-2 block w-full rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 px-4 py-3 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
         {% if form.description.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.description.help_text }}</p>{% endif %}
-        {% if form.description.errors %}<p class="text-xs text-red-600 mt-1">{{ form.description.errors|join:", " }}</p>{% endif %}
+        {% if form.description.errors %}
+          <p class="text-xs text-rose-600 mt-1">{{ form.description.errors|join:", " }}</p>
+        {% endif %}
       </div>
 
       <!-- Books (multi-select) -->
       <div>
-        <label for="{{ form.books.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Books</label>
-        {{ form.books|add_class:"mt-1 block w-full rounded-md border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-sm text-slate-900 dark:text-slate-100 shadow-sm focus:ring-indigo-500 focus:border-indigo-500 h-40" }}
+        <label for="{{ form.books.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-300">Books <span class="text-rose-600">*</span></label>
+
+        <!-- Hidden original select: kept for server-side binding -->
+        <div class="sr-only">
+          {{ form.books|add_class:"hidden" }}
+        </div>
+
+        <!-- Visual selectable book grid -->
+        <div class="mt-2">
+          <!-- Search & select controls -->
+          <div class="flex items-center gap-3 mb-3">
+            <div class="relative flex-1">
+              <label for="book-filter" class="sr-only">Filter books</label>
+              <input id="book-filter" type="search" placeholder="Search your books by title or author..." class="w-full pl-10 pr-3 py-2 rounded-lg border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
+              <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><circle cx="11" cy="11" r="6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="button" id="select-all-books" class="px-3 py-2 text-xs rounded-lg border bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700">Select all</button>
+              <button type="button" id="clear-all-books" class="px-3 py-2 text-xs rounded-lg border bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700">Clear</button>
+            </div>
+          </div>
+
+          <!-- Grid -->
+          <div id="books-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {% for book in user_books %}
+              <label class="book-card relative cursor-pointer rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-2 flex flex-col items-start gap-2 hover:shadow-md transition">
+                <input type="checkbox" class="book-checkbox sr-only" data-book-id="{{ book.id }}" value="{{ book.id }}" {% if form.books.value and book.id|stringformat:"s" in form.books.value %}checked{% endif %} aria-label="Select {{ book.title }}" />
+
+                <div class="w-full h-28 bg-slate-100 dark:bg-slate-800 rounded-md overflow-hidden flex items-center justify-center">
+                  {% if book.cover_page %}
+                    <img src="{{ book.cover_page.url }}" alt="{{ book.title }}" class="w-full h-full object-cover">
+                  {% else %}
+                    <div class="text-slate-400">No cover</div>
+                  {% endif %}
+                </div>
+
+                <div class="w-full mt-1">
+                  <div class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ book.title }}</div>
+                  <div class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ book.author }}</div>
+                </div>
+
+                <div class="absolute right-2 top-2 w-6 h-6 rounded-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm checkbox-indicator" aria-hidden="true">
+                  <svg class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </div>
+              </label>
+            {% empty %}
+              <div class="col-span-full text-sm text-slate-500">You don't have any books yet. <a href="{% url 'books:add_book' %}" class="text-indigo-600 hover:underline">Add books</a> to include them in playlists.</div>
+            {% endfor %}
+          </div>
+
+          <p class="text-xs text-slate-400 mt-2">Tip: click a card to toggle selection. Only your books are shown here.</p>
+        </div>
+
         {% if form.books.help_text %}<p class="text-xs text-slate-400 mt-1">{{ form.books.help_text }}</p>{% endif %}
-        {% if form.books.errors %}<p class="text-xs text-red-600 mt-1">{{ form.books.errors|join:", " }}</p>{% endif %}
+        {% if form.books.errors %}
+          <p class="text-xs text-rose-600 mt-1">{{ form.books.errors|join:", " }}</p>
+        {% endif %}
+
+        <!-- Minimal JS to sync cards with the hidden select element -->
+        <script>
+          (function () {
+            const hiddenSelect = document.querySelector('select[name="{{ form.books.name }}"]');
+            const checkboxes = document.querySelectorAll('.book-card .book-checkbox');
+            const grid = document.getElementById('books-grid');
+            const filter = document.getElementById('book-filter');
+            const selectAllBtn = document.getElementById('select-all-books');
+            const clearAllBtn = document.getElementById('clear-all-books');
+
+            function syncToSelect() {
+              if (!hiddenSelect) return;
+              // clear current selection
+              for (let i = 0; i < hiddenSelect.options.length; i++) {
+                hiddenSelect.options[i].selected = false;
+              }
+              // set selected based on checked boxes
+              checkboxes.forEach(cb => {
+                const id = cb.value;
+                if (cb.checked) {
+                  // find option with value
+                  const opt = hiddenSelect.querySelector(`option[value="${id}"]`);
+                  if (opt) opt.selected = true;
+                }
+                // toggle visual indicator
+                const indicator = cb.closest('.book-card').querySelector('.checkbox-indicator svg');
+                if (cb.checked) {
+                  indicator.classList.remove('hidden');
+                } else {
+                  indicator.classList.add('hidden');
+                }
+              });
+            }
+
+            // initial sync
+            document.addEventListener('DOMContentLoaded', function () {
+              syncToSelect();
+            });
+
+            // toggle when clicking card
+            grid.addEventListener('click', function (e) {
+              const card = e.target.closest('.book-card');
+              if (!card) return;
+              const cb = card.querySelector('.book-checkbox');
+              cb.checked = !cb.checked;
+              syncToSelect();
+            });
+
+            // keyboard accessibility for checkboxes
+            checkboxes.forEach(cb => {
+              cb.addEventListener('change', syncToSelect);
+            });
+
+            // filter books
+            if (filter) {
+              filter.addEventListener('input', function () {
+                const q = this.value.trim().toLowerCase();
+                document.querySelectorAll('#books-grid label.book-card').forEach(card => {
+                  const title = card.querySelector('div.text-sm')?.textContent?.toLowerCase() || '';
+                  const author = card.querySelector('div.text-xs')?.textContent?.toLowerCase() || '';
+                  if (!q || title.includes(q) || author.includes(q)) {
+                    card.style.display = '';
+                  } else {
+                    card.style.display = 'none';
+                  }
+                });
+              });
+            }
+
+            // select all / clear
+            if (selectAllBtn) selectAllBtn.addEventListener('click', function () {
+              checkboxes.forEach(cb => cb.checked = true);
+              syncToSelect();
+            });
+            if (clearAllBtn) clearAllBtn.addEventListener('click', function () {
+              checkboxes.forEach(cb => cb.checked = false);
+              syncToSelect();
+            });
+
+          })();
+        </script>
       </div>
 
-      <div class="flex justify-end gap-3">
-        <a href="{% url 'books:playlist_list' %}" class="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-200">Cancel</a>
-        <button type="submit" class="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold shadow hover:bg-indigo-700">
-          Save
+      <!-- Controls -->
+      <div class="flex flex-col sm:flex-row items-center sm:items-center gap-3 sm:gap-4 justify-end">
+        <a href="{% url 'books:playlist_list' %}" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-slate-200 dark:border-slate-700 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800"> 
+          <!-- cancel icon -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M6 18L18 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Cancel
+        </a>
+
+        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2 rounded-lg bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-sm font-semibold shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-400">
+          <!-- Save (disk) icon -->
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14M5 11h14M9 17h6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Save playlist
         </button>
       </div>
+
     </form>
   </div>
 </div>
+
 {% endblock %}
