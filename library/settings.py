@@ -28,8 +28,12 @@ SECRET_KEY = 'django-insecure-6-*zb%d4ggq(ke1vzob9lg7mu1gr8-9d)#ccu)g$j(*)9@@2$k
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['genu-library-by-imran.onrender.com']
+ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://genu-library-by-imran.onrender.com/',
+    'http://127.0.0.1:8000/',
+]
 
 # Application definition
 
