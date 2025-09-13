@@ -242,7 +242,13 @@ class AddTagView(LoginRequiredMixin, CreateView):
         tag_name = form.cleaned_data['name']
         Tag.objects.get_or_create(name=tag_name)
         messages.success(self.request, f"Tag '{tag_name}' added")
-        return redirect('books:book_list')
+        return redirect('books:add_tag')
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tags'] = Tag.objects.all().order_by('name')
+        return context
+        
 
 
 # -------------------------

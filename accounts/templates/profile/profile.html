@@ -1,7 +1,5 @@
 {% extends "base.html" %}
 {% load humanize %}
-
-
 {% block title %}{{ profile.user.username }} — Profile{% endblock %}
 
 {% block content %}
@@ -282,10 +280,10 @@
   <!-- TABS: Overview / Books / Reviews / Playlists -->
   <nav class="mt-6">
     <div role="tablist" aria-label="Profile sections" class="flex gap-2 overflow-x-auto pb-1">
-      <button data-tab="overview" class="profile-tab active px-3 py-2 text-sm rounded-full bg-indigo-600 text-white focus:outline-none">Overview</button>
-      <button data-tab="books" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Books</button>
-      <button data-tab="reviews" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Reviews</button>
-      <button data-tab="playlists" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none">Playlists</button>
+      <button data-tab="overview" class="profile-tab active px-3 py-2 text-sm rounded-full bg-indigo-600 text-white focus:outline-none m-2">Overview</button>
+      <button data-tab="books" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none m-2">Books</button>
+      <button data-tab="reviews" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none m-2">Reviews</button>
+      <button data-tab="playlists" class="profile-tab px-3 py-2 text-sm rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 focus:outline-none m-2">Playlists</button>
     </div>
   </nav>
 
@@ -303,30 +301,7 @@
 
         <div class="mt-3 overflow-x-auto -mx-2 py-2">
           <div class="flex gap-3 px-2">
-            {% for b in user_books|slice:":8" %}
-              <a href="{% url 'books:book_detail' b.slug %}" class="min-w-[200px] shrink-0 block rounded-xl border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm bg-white dark:bg-slate-800">
-                <div class="h-36 bg-slate-50 dark:bg-slate-900">
-                  {% if b.cover_page %}
-                    <img src="{{ b.cover_page.url }}" alt="{{ b.title }}" class="w-full h-full object-cover">
-                  {% else %}
-                    <div class="w-full h-full flex items-center justify-center text-slate-400">No cover</div>
-                  {% endif %}
-                </div>
-                <div class="p-3">
-                  <div class="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">{{ b.title }}</div>
-                  <div class="text-xs text-slate-400 mt-1">{{ b.author }}</div>
-                </div>
-              </a>
-            {% empty %}
-              <div class="text-sm text-slate-500 px-2">No uploads yet.</div>
-            {% endfor %}
-          </div>
-        </div>
-      </div>
-
-      <!-- Books for sale (compact grid) -->
-      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {% for book in books_for_sale|slice:":6" %}
+            {% for book in books_for_sale|slice:":2" %}
           <article class="bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-100 dark:border-slate-800 shadow-sm">
             <div class="flex items-center gap-3">
               {% if book.cover_page %}
@@ -349,8 +324,13 @@
         {% empty %}
           <div class="col-span-full text-center text-sm text-slate-500">No listings yet.</div>
         {% endfor %}
+        
+        
+          </div>
+        </div>
       </div>
-    </div>
+
+      
 
     <!-- right sidebar: small stats + quick actions -->
     <aside class="space-y-4">
@@ -370,6 +350,7 @@
           <div class="mt-3 flex gap-2">
             <a href="{% url 'books:playlist_add' %}" class="flex-1 text-center px-3 py-2 rounded-md bg-indigo-600 text-white text-sm">New playlist</a>
             <a href="{% url 'books:add_book' %}" class="flex-1 text-center px-3 py-2 rounded-md bg-slate-50 dark:bg-slate-700 text-sm">Add book</a>
+            <a href="{% url 'books:playlist_list' %}" class="flex-1 text-center px-3 py-2 rounded-md bg-slate-50 dark:bg-slate-700 text-sm">All playlist</a>
           </div>
         {% endif %}
       </div>

@@ -1,5 +1,6 @@
 {% load widget_tweaks %}
 {% load static %}
+{% load humanize %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -178,6 +179,7 @@
               <a href="{% url 'accounts:profile' user.username %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Profile</a>
               <a href="{% url 'books:book_list' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">All books</a>
               <a href="{% url 'books:add_book' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Add book</a>
+              <a href="{% url 'books:add_tag' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Contribute tags</a>
               <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
               <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Logout</button>
@@ -215,7 +217,7 @@
       <a href="{% url 'books:book_list' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">All books</a>
       {% if user.is_authenticated %}
         <a href="{% url 'books:add_book' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add book</a>
-        <a href="{% url 'books:add_tag' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Add tags</a>
+        <a href="{% url 'books:add_tag' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Contribute tags</a>
       {% else %}
         <a href="{% url 'accounts:signin' %}" class="block px-3 py-2 rounded-md text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">Sign in</a>
       {% endif %}
@@ -321,7 +323,7 @@
         </a>
 
         <p class="text-sm text-slate-600 dark:text-slate-300 max-w-sm">
-          A community library to find free & premium reads, curate playlists, and share reviews. Built for readers — by readers.
+          A community library to find free & premium reads, create playlists, and share reviews. Built for readers — by readers.
         </p>
 
         <div class="flex items-center gap-3">

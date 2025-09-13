@@ -17,6 +17,10 @@ class Tag(models.Model):
 
     def __str__(self):
         return self.name
+    
+    @property
+    def tag_count(self):
+        return self.taged_books.count
 
 
 
@@ -24,7 +28,7 @@ class Books(models.Model):
     # book description
     uploader = models.ForeignKey(User, on_delete=models.CASCADE)
     title = models.CharField(max_length=100)
-    tag = models.ManyToManyField(Tag, blank=True)
+    tag = models.ManyToManyField(Tag, blank=True, related_name='taged_books')
     author = models.CharField(max_length=100)
     description = models.CharField(max_length=1000)
     upload_date = models.DateTimeField(auto_now_add=True)
@@ -77,6 +81,7 @@ class Books(models.Model):
     
     # Average rating of the book
     
+    @property
     def average_rating(self):
         from django.db.models import Avg
         result = self.ratings.aggregate(avg=Avg('rating'))

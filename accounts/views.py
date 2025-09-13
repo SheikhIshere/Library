@@ -21,7 +21,11 @@ from django.contrib.auth.models import User
 from .models import ProfileModel
 from .forms import SignupForm, SiginForm, EditProfileForm
 
+# accounts/views.py
+from books.models import Books, Comment, Playlist  # ✅ import these at the top
 
+# math
+from django.db.models import Avg
 
 # views main logic starts from here
 
@@ -64,8 +68,6 @@ class UserLogoutView(LogoutView):
     next_page = reverse_lazy('accounts:signin')
 
 
-# accounts/views.py
-from books.models import Books, Comment, Playlist  # ✅ import these at the top
 
 class ProfileView(DetailView):
     template_name = 'profile/profile.html'
@@ -79,38 +81,37 @@ class ProfileView(DetailView):
         user = User.objects.get(username=username)
         profile, created = ProfileModel.objects.get_or_create(user=user)
         return profile
+ 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.get_object().user
 
-    
-def get_context_data(self, **kwargs):
-    context = super().get_context_data(**kwargs)
-    user = self.get_object().user
+        uploaded_books = Books.objects.filter(uploader=user).order_by('-upload_date')
+        recent_reviews = Comment.objects.filter(user=user).order_by('-created_at')[:10]
+        user_playlists = Playlist.objects.filter(user=user).prefetch_related('books')
 
-    uploaded_books = Books.objects.filter(uploader=user).order_by('-upload_date')
-    recent_reviews = Comment.objects.filter(user=user).order_by('-created_at')[:10]
-    user_playlists = Playlist.objects.filter(user=user).prefetch_related('books')
+        # aggregate favorites & avg rating across user's books
+        user_books_qs = Books.objects.filter(uploader=user)
+        fav_count = 0
+        avg_rating = None
+        if user_books_qs.exists():
+            fav_count = sum([b.total_favorites for b in user_books_qs])
+            # compute avg rating across books (fallback safe)
+            ratings = user_books_qs.aggregate(avg=Avg('ratings__rating'))
+            avg_rating = ratings.get('avg') or 0
 
-    # aggregate favorites & avg rating across user's books
-    user_books_qs = Books.objects.filter(uploader=user)
-    fav_count = 0
-    avg_rating = None
-    if user_books_qs.exists():
-        fav_count = sum([b.total_favorites() for b in user_books_qs])
-        # compute avg rating across books (fallback safe)
-        ratings = user_books_qs.aggregate(avg=Avg('ratings__rating'))
-        avg_rating = ratings.get('avg') or 0
-
-    context.update({
-        'uploaded_books': uploaded_books,
-        'recent_reviews': recent_reviews,
-        'user_playlists': user_playlists,
-        'user_books': uploaded_books,            # used in hero+activity
-        'books_for_sale': uploaded_books.filter(visibility__in=['public','unlisted']),
-        'related_stats': {
-            'favorites_count': fav_count,
-            'avg_rating': avg_rating
-        }
-    })
-    return context
+        context.update({
+            'uploaded_books': uploaded_books,
+            'recent_reviews': recent_reviews,
+            'user_playlists': user_playlists,
+            'user_books': uploaded_books,            # used in hero+activity
+            'books_for_sale': uploaded_books.filter(visibility__in=['public','unlisted']),
+            'related_stats': {
+                'favorites_count': fav_count,
+                'avg_rating': avg_rating
+            }
+        })
+        return context
 
 
 
