@@ -138,13 +138,51 @@
         {% endif %}
 
         <!-- Theme toggle -->
-        <button id="theme-toggle"
-                class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                title="Toggle color theme"
-                aria-pressed="false">
-          <svg id="icon-moon" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-          <svg id="icon-sun" class="w-5 h-5" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-        </button>
+        <!-- ========== Drop-in: Gold coin (navbar) ========== -->
+<button id="theme-toggle"
+class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-fast focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+title="Toggle color theme / balance"
+aria-pressed="false">
+<span class="inline-flex items-center gap-2">
+<!-- Compact gold coin SVG (clean, subtle, no stray white shapes) -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="28" height="28" role="img" aria-hidden="true">
+<defs>
+<radialGradient id="coinFaceSmall" cx="45%" cy="35%" r="75%">
+  <stop offset="0%" stop-color="#fff9d9"/>
+  <stop offset="40%" stop-color="#ffd95c"/>
+  <stop offset="75%" stop-color="#ffc107"/>
+  <stop offset="100%" stop-color="#b26a00"/>
+</radialGradient>
+<linearGradient id="coinRimSmall" x1="0%" y1="0%" x2="100%" y2="100%">
+  <stop offset="0%" stop-color="#ffe082"/>
+  <stop offset="50%" stop-color="#ffca28"/>
+  <stop offset="100%" stop-color="#9c6d00"/>
+</linearGradient>
+<radialGradient id="coinInnerSmall" cx="50%" cy="40%" r="65%">
+  <stop offset="0%" stop-color="#fff9e6" stop-opacity="0.95"/>
+  <stop offset="60%" stop-color="#ffda60" stop-opacity="0.8"/>
+  <stop offset="100%" stop-color="#d99a00" stop-opacity="0.7"/>
+</radialGradient>
+</defs>
+
+<!-- Rim + face -->
+<circle cx="100" cy="92" r="72" fill="url(#coinRimSmall)" stroke="#6b3f00" stroke-width="3"/>
+<circle cx="100" cy="92" r="58" fill="url(#coinFaceSmall)" stroke="#d18c00" stroke-width="1.6"/>
+<circle cx="100" cy="92" r="42" fill="url(#coinInnerSmall)" stroke="#c17f00" stroke-width="1"/>
+
+<!-- Simple emblem (keeps file light) -->
+<g transform="translate(100,92)" fill="#9c6d00">
+<polygon points="0,-12 3,-4 10,-4 5,1 7,10 0,6 -7,10 -5,1 -10,-4 -3,-4" />
+</g>
+</svg>
+
+<!-- balance text (hidden on very small screens) -->
+<span class="text-xs font-semibold hidden sm:inline" title="{{ profile.balance|default:user_balance|default:'0'|intcomma }}">
+{{ user_balance }}
+</span>
+</span>
+</button>
+<!-- ========== End coin section ========== -->
 
         <!-- User / Auth -->
         {% if user.is_authenticated %}

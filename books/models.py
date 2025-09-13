@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
+from PIL import Image
 
 
 VISIBILITY_CHOICES = [
@@ -105,6 +106,13 @@ class Books(models.Model):
                 self.slug = f"{original_slug}-{counter}"
                 counter += 1
         super().save(*args, **kwargs)
+
+        if self.cover_page:
+            img = Image.open(self.cover_page.path)
+            max_size = (800, 800)
+            img.thumbnail(max_size)
+            img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True)
+
 
 
 class Borrow(models.Model):
