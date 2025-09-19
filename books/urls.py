@@ -15,6 +15,7 @@ from .views import (
     AddBookToPlaylistView,
     ReportCreateView,
     SearchSuggestionsView,
+    BookDeletView,
 )
 
 app_name = 'books'
@@ -27,6 +28,8 @@ urlpatterns = [
 
     path('books_details/<str:slug>/', BookDetailView.as_view(), name='book_detail'),
     path('books_details/<str:slug>/edit/', BookUpdateView.as_view(), name='edit_book'),
+    path('books/<str:slug>/delete/', BookDeletView.as_view(), name='delete_book'),
+
     # Interactions
     path('books_details/<str:slug>/favorite/', ToggleFavoriteView.as_view(), name='toggle_favorite'),
     path('books_details/<str:slug>/comment/', AddCommentView.as_view(), name='add_comment'),

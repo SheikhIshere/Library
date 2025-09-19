@@ -1,9 +1,11 @@
 # books/views.py
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import ListView, DetailView, CreateView, UpdateView
+from django.views.generic.edit import DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib import messages
 from django.contrib.auth import get_user_model  # ✅ added
@@ -156,6 +158,10 @@ class BookDetailView(DetailView):
         return self.render_to_response(context)
 
 
+# -------------------------
+# creating book
+# -------------------------
+
 class BookCreateView(LoginRequiredMixin, CreateView):
     model = Books
     form_class = BooksForm
@@ -168,6 +174,9 @@ class BookCreateView(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return reverse_lazy('books:book_list')
 
+# -------------------------
+# editing book
+# -------------------------
 
 class BookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Books
@@ -182,6 +191,26 @@ class BookUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get_success_url(self):
         return reverse_lazy('books:book_detail', kwargs={'slug': self.object.slug})
+
+
+# -------------------------
+# Deleting book
+# -------------------------
+
+class BookDeletView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Books
+    template_name = 'books/confirm_delete_book.html'
+    success_url = reverse_lazy('books:book_list')
+    slug_field = 'slug'
+    slug_url_kwarg = 'slug'
+    
+    def test_func(self):
+       book = self.get_object()
+       return book.uploader == self.request.user
+    
+    def handle_no_permission(self):
+        messages.error(self.request, "You are not allowed to delete this book.")
+        return redirect('books:book_list')
 
 
 # -------------------------
@@ -470,3 +499,5 @@ class FeaturedBooksView(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         return super().form_valid(form)
+    
+

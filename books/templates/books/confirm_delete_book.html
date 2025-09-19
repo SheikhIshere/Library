@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="max-w-xl mx-auto p-6">
+  <h2 class="text-xl font-semibold mb-4">Delete book</h2>
+
+  <p class="mb-4">
+    Are you sure you want to permanently delete
+    <strong>{{ object.title|default:"this book" }}</strong>?
+  </p>
+
+  <form method="post" class="flex items-center">
+    {% csrf_token %}
+    <button type="submit"
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400"
+            aria-label="Confirm delete">
+      <!-- Font Awesome icon (ensure FA is loaded in base.html) -->
+      <i class="fa-solid fa-trash" aria-hidden="true"></i>
+      <span>Yes, delete</span>
+    </button>
+
+    <a href="javascript:history.back()"
+   class="ml-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300 shadow-sm"
+   aria-label="Cancel and go back">
+  <span>Cancel</span>
+</a>
+
+  </form>
+
+  <p class="mt-4 text-sm text-gray-600">
+    Or go back to the <a href="{% url 'books:book_list' %}" class="underline">book list</a>.
+  </p>
+</div>
+{% endblock %}

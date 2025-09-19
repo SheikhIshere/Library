@@ -107,11 +107,12 @@ class Books(models.Model):
                 counter += 1
         super().save(*args, **kwargs)
 
-        if self.cover_page:
+        """ if self.cover_page:
             img = Image.open(self.cover_page.path)
             max_size = (800, 800)
             img.thumbnail(max_size)
-            img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True)
+            img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True) """
+
 
 
 
