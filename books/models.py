@@ -4,7 +4,13 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.text import slugify
+from django.utils import timezone
 from PIL import Image
+
+
+from pdf2image import convert_from_path
+from django.core.files.base import ContentFile
+from io import BytesIO
 
 
 VISIBILITY_CHOICES = [
@@ -12,6 +18,7 @@ VISIBILITY_CHOICES = [
     ("private", "Private"),
     ("unlisted", "Unlisted"),
 ]
+
 
 class Tag(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -25,12 +32,15 @@ class Tag(models.Model):
 
 
 
+
+
+
 class Books(models.Model):
     # book description
     uploader = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=100)
+    title = models.CharField(max_length=200)
     tag = models.ManyToManyField(Tag, blank=True, related_name='taged_books')
-    author = models.CharField(max_length=100)
+    author = models.CharField(max_length=200)
     description = models.CharField(max_length=1000)
     upload_date = models.DateTimeField(auto_now_add=True)
     update_date = models.DateTimeField(auto_now=True)
@@ -47,6 +57,12 @@ class Books(models.Model):
     
     # price related data
     price = models.IntegerField()
+
+    # custom permissions
+    class Meta:
+        permissions = [
+            ("can_Bulk_upload_", "Can bulk upload books"),            
+        ]
 
     # fucntions
     # for admin panel
@@ -106,12 +122,46 @@ class Books(models.Model):
                 self.slug = f"{original_slug}-{counter}"
                 counter += 1
         super().save(*args, **kwargs)
-
-        """ if self.cover_page:
+        
+        # setting thambnil front first image of 
+        if self.book_file and not self.cover_page:
+           try:
+               # Convert first page of PDF to image
+               pdf_path = self.book_file.path
+               pages = convert_from_path(pdf_path, first_page=1, last_page=1)
+               if pages:
+                   image = pages[0]
+                   # Resize (optional)
+                   max_size = (600, 800)
+                   image.thumbnail(max_size)
+                   # Save to memory
+                   img_io = BytesIO()
+                   image.save(img_io, format="JPEG", quality=80)
+                   img_content = ContentFile(img_io.getvalue(), name=f"{self.slug}_cover.jpg")
+                   # Assign to cover_page
+                   self.cover_page.save(f"{self.slug}_cover.jpg", img_content, save=False)
+                   # Save again
+                   super().save(update_fields=["cover_page"])
+           except Exception as e:
+               print(f"Error generating cover: {e}")
+        
+        # # optimize cover image
+        # if self.cover_page:
+        #     img = Image.open(self.cover_page.path)
+        #     max_size = (800, 800)
+        #     img.thumbnail(max_size)
+        #     img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True)
+        # optimize cover image
+        if self.cover_page:
             img = Image.open(self.cover_page.path)
             max_size = (800, 800)
             img.thumbnail(max_size)
-            img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True) """
+
+            # Convert RGBA or other modes to RGB
+            if img.mode not in ('RGB'):
+                img = img.convert('RGB')
+
+            img.save(self.cover_page.path, format="JPEG", quality=70, optimize=True)
 
 
 

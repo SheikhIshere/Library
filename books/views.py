@@ -48,7 +48,7 @@ class BookListView(ListView):
     model = Books
     template_name = 'books/book_list.html'
     context_object_name = 'books'
-    paginate_by = 12  # change to taste
+    paginate_by = 30  # change to taste
 
     def get_queryset(self):
         qs = Books.objects.filter(visibility='public').distinct()

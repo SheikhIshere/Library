@@ -29,23 +29,80 @@ from django.db.models import Avg
 
 # views main logic starts from here
 
+# class SignUpView(CreateView):
+#     template_name = 'registration/signup.html'
+#     model = User
+#     form_class = SignupForm
+# 
+#     def form_valid(self, form):
+#         user = form.save()
+# 
+#         if User.objects.filter(email=form.cleaned_data['email']).exists():
+#             form.add_error('email', 'Email already exists')
+#             print('i am from view.py', form.add_error('email', 'Email already exists'))
+#             return self.form_invalid(form)
+#         if User.objects.filter(username=form.cleaned_data['username'].lower()).exists():
+#             form.add_error('username', 'Username already taken')
+#             print('i am from view.py', form.add_error('username', 'Username already taken'))
+#             return self.form_invalid(form)
+#         else:            
+#             login(self.request, user)
+#             return redirect('accounts:profile', username=user.username)
+
+# testing SignUpView
+# class SignUpView(CreateView):
+#     template_name = 'registration/signup.html'
+#     model = User
+#     form_class = SignupForm
+
+#     def form_valid(self, form):
+#         email = form.cleaned_data.get('email', '').strip()
+#         username = form.cleaned_data.get('username', '').strip().lower()
+
+#         if User.objects.filter(email__iexact=email).exists():
+#             form.add_error('email', 'Email already exists')
+#             return self.form_invalid(form)
+
+#         if User.objects.filter(username__iexact=username).exists():
+#             form.add_error('username', 'Username already taken')
+#             return self.form_invalid(form)
+
+#         user = form.save()
+#         login(self.request, user)
+#         return redirect('accounts:profile', username=user.username)
+
+
+# test2
 class SignUpView(CreateView):
     template_name = 'registration/signup.html'
     model = User
     form_class = SignupForm
 
     def form_valid(self, form):
+        # Save user first (form already validated usernames/emails)
         user = form.save()
 
-        if User.objects.filter(email=form.cleaned_data['email']).exists():
-            form.add_error('email', 'Email already exists')
-            return self.form_invalid(form)
-        if User.objects.filter(username=form.cleaned_data['username'].lower()).exists():
-            form.add_error('username', 'Username already taken')
-            return self.form_invalid(form)
-        else:            
-            login(self.request, user)
-            return redirect('accounts:profile', username=user.username)
+        # Try to authenticate using email (your custom backend supports email).
+        # Use the raw password the user entered in the form (password1).
+        email = form.cleaned_data.get('email')
+        password = form.cleaned_data.get('password1')
+
+        user_auth = authenticate(self.request, email=email, password=password)
+
+        # Fallback: try with username if your backend also supports that.
+        if user_auth is None:
+            username = form.cleaned_data.get('username')
+            user_auth = authenticate(self.request, username=username, password=password)
+
+        # If authenticate succeeded, login() will work because user_auth has backend attribute
+        if user_auth:
+            login(self.request, user_auth)
+        else:
+            # As a last-resort fallback (not ideal), specify backend explicitly.
+            # Use the dotted path to your backend class.
+            login(self.request, user, backend='accounts.backend.EmailBackend')
+
+        return redirect('accounts:profile', username=user.username)
 
 
 class SigninView(LoginView):

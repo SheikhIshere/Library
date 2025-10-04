@@ -45,8 +45,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'accounts',
-    'books',
+    
+    # local apps
+    'accounts.apps.AccountsConfig',
+    'books.apps.BooksConfig',
+    'Special.apps.SpecialConfig',
+
+    # third party apps
     'widget_tweaks',
     'django.contrib.humanize',  # Make sure this is included
 
@@ -55,6 +60,9 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    
+    'whitenoise.middleware.WhiteNoiseMiddleware',   # <<< for production
+
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',

@@ -224,6 +224,19 @@ aria-pressed="false">
               <a href="{% url 'books:book_list' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">All books</a>
               <a href="{% url 'books:add_book' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Add book</a>
               <a href="{% url 'books:add_tag' %}" class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Contribute tags</a>
+              {% if perms.special.can_Bulk_upload_ %}
+              <a href="{% url 'special:bulk_upload' %}" 
+                 class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" 
+                 role="menuitem">
+                 Bulk upload
+              </a>
+              <a href="{% url 'special:bulk_tag_upload' %}" 
+                 class="block px-4 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700" 
+                 role="menuitem">
+                 Bulk tag upload
+              </a>
+              {% endif %}
+
               <div class="border-t border-slate-100 dark:border-slate-700 my-1"></div>
               <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}
                 <button type="submit" class="w-full text-left px-4 py-2 text-sm text-rose-600 hover:bg-slate-50 dark:hover:bg-slate-700" role="menuitem">Logout</button>

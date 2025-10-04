@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Bulk Upload Tags — Genu Library{% endblock %}
+
+{% block content %}
+<section class="site-max mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+  <div class="bg-white dark:bg-slate-800 shadow-lg rounded-2xl p-6 sm:p-8">
+
+    <!-- header -->
+    <div class="flex items-start gap-4 mb-6">
+      <div class="w-12 h-12 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500 flex items-center justify-center text-white text-xl shadow">
+        <i class="fas fa-tags" aria-hidden="true"></i>
+      </div>
+      <div class="flex-1">
+        <h1 class="text-xl sm:text-2xl font-semibold text-slate-900 dark:text-slate-100">Bulk Upload Tags</h1>
+        <p class="text-sm text-slate-500 dark:text-slate-300 mt-1">Upload multiple tags at once using comma-separated values or new lines.</p>
+      </div>
+      <div class="hidden sm:flex items-center text-sm text-slate-500 gap-3">
+        <a href="{% url 'special:bulk_upload' %}" class="px-3 py-2 rounded-full border text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Books
+        </a>
+        <a href="{% url 'books:book_list' %}" class="px-3 py-2 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+          <i class="fas fa-books mr-2"></i>Browse books
+        </a>
+      </div>
+    </div>
+
+    <!-- messages -->
+    {% if messages %}
+      <div class="space-y-3 mb-4">
+        {% for msg in messages %}
+          <div class="p-3 rounded-lg border-l-4 shadow-sm text-sm {% if msg.tags == 'success' %}border-green-500 bg-green-50 text-green-800{% elif msg.tags == 'error' or msg.tags == 'danger' %}border-rose-500 bg-rose-50 text-rose-800{% else %}border-indigo-500 bg-indigo-50 text-indigo-800{% endif %}">
+            <i class="fas fa-info-circle mr-2"></i> {{ msg }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post" id="bulkTagForm" class="grid grid-cols-1 gap-6">
+      {% csrf_token %}
+      {{ form.non_field_errors }}
+
+      <!-- bulk textarea -->
+      <div class="bg-slate-50 dark:bg-slate-900 p-4 rounded-lg border">
+        <label for="{{ form.bulk_text.id_for_label }}" class="block text-sm font-medium text-slate-700 dark:text-slate-200 mb-2">Tag Names</label>
+        {{ form.bulk_text|attr:"class:resize-y w-full rounded-md border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-3 text-sm"|attr:"rows:8" }}
+        {% if form.bulk_text.help_text %}
+          <p class="text-xs text-slate-500 mt-2">{{ form.bulk_text.help_text }}</p>
+        {% endif %}
+        {% if form.bulk_text.errors %}
+          <p class="text-sm text-rose-600 mt-2">{{ form.bulk_text.errors }}</p>
+        {% endif %}
+      </div>
+
+      <!-- actions -->
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <button type="submit" class="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-green-400">
+            <i class="fas fa-upload"></i> Upload Tags
+          </button>
+
+          <button type="button" id="clearFormBtn" class="inline-flex items-center gap-2 px-3 py-2 rounded-lg border text-sm text-slate-700 hover:bg-slate-50">
+            <i class="fas fa-broom mr-1"></i> Clear
+          </button>
+        </div>
+        <div class="text-sm text-slate-500">Duplicate tags will be automatically skipped.</div>
+      </div>
+    </form>
+
+    <!-- results summary -->
+    {% if created or skipped %}
+      <div class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {% if created %}
+          <div class="p-4 bg-emerald-50 border-l-4 border-emerald-500 rounded shadow-sm flex items-center gap-3">
+            <i class="fas fa-check-circle text-emerald-600 text-lg"></i>
+            <div>
+              <div class="font-semibold text-emerald-800">{{ created }} tag(s) created</div>
+              <div class="text-xs text-emerald-600">New tags added to the system</div>
+            </div>
+          </div>
+        {% endif %}
+
+        {% if skipped %}
+          <div class="p-4 bg-amber-50 border-l-4 border-amber-500 rounded shadow-sm flex items-center gap-3">
+            <i class="fas fa-info-circle text-amber-600 text-lg"></i>
+            <div>
+              <div class="font-semibold text-amber-800">{{ skipped }} tag(s) skipped</div>
+              <div class="text-xs text-amber-600">Tags already existed in the system</div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <!-- detailed results -->
+    {% if results %}
+      <div class="mt-6 p-4 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+        <h3 class="font-semibold mb-3 text-slate-900 dark:text-slate-100">Upload Results</h3>
+        <div class="space-y-2 max-h-96 overflow-y-auto">
+          {% for r in results %}
+            <div class="flex items-center justify-between p-3 rounded-lg border {% if r.status == 'created' %}bg-emerald-50 border-emerald-200{% elif r.status == 'skipped' %}bg-amber-50 border-amber-200{% else %}bg-rose-50 border-rose-200{% endif %}">
+              <div class="flex items-center gap-3">
+                {% if r.status == "created" %}
+                  <i class="fas fa-check-circle text-emerald-600"></i>
+                  <span class="font-medium text-emerald-800">{{ r.name }}</span>
+                  <span class="text-xs text-emerald-600 bg-emerald-100 px-2 py-1 rounded-full">Created</span>
+                {% elif r.status == "skipped" %}
+                  <i class="fas fa-info-circle text-amber-600"></i>
+                  <span class="font-medium text-amber-800">{{ r.name }}</span>
+                  <span class="text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">Already exists</span>
+                {% else %}
+                  <i class="fas fa-exclamation-circle text-rose-600"></i>
+                  <span class="font-medium text-rose-800">{{ r.name }}</span>
+                  <span class="text-xs text-rose-600 bg-rose-100 px-2 py-1 rounded-full">Error</span>
+                {% endif %}
+              </div>
+              {% if r.error %}
+                <div class="text-xs text-rose-600 max-w-xs text-right">{{ r.error }}</div>
+              {% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    
+
+    <!-- existing tags preview -->
+    <div class="mt-6 p-6 bg-slate-50 dark:bg-slate-900 rounded-lg border">
+      <h4 class="font-semibold mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2">
+        <i class="fas fa-tags text-slate-500"></i>
+        Existing Tags in System
+      </h4>
+      <div class="flex flex-wrap gap-2 max-h-48 overflow-y-auto p-2">
+        {% for tag in existing_tags %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 bg-white dark:bg-slate-800 border rounded-full text-xs text-slate-700 dark:text-slate-300">
+            <i class="fas fa-tag text-xs text-slate-400"></i>
+            {{ tag.name }}
+            <span class="text-xs text-slate-400 ml-1">({{ tag.tag_count }})</span>
+          </span>
+        {% empty %}
+          <p class="text-sm text-slate-500 italic">No tags exist in the system yet.</p>
+        {% endfor %}
+      </div>
+      <p class="text-xs text-slate-500 mt-3">Numbers in parentheses show how many books use each tag.</p>
+    </div>
+
+  </div>
+</section>
+
+<script>
+(function(){
+  const clearBtn = document.getElementById('clearFormBtn');
+  const form = document.getElementById('bulkTagForm');
+  const textarea = form.querySelector('textarea');
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      if (confirm('Clear all tag input? This cannot be undone.')) {
+        textarea.value = '';
+        textarea.focus();
+      }
+    });
+  }
+
+  // Auto-resize textarea
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+    
+    // Trigger initial resize
+    setTimeout(() => {
+      textarea.style.height = 'auto';
+      textarea.style.height = (textarea.scrollHeight) + 'px';
+    }, 100);
+  }
+})();
+
+function copyTagTemplate() {
+  const text = document.getElementById('tagTemplate').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    // Show subtle feedback
+    const button = event.target.closest('button');
+    const originalHtml = button.innerHTML;
+    button.innerHTML = '<i class="fas fa-check text-xs"></i> Copied!';
+    button.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+    button.classList.add('bg-green-600', 'hover:bg-green-700');
+    
+    setTimeout(() => {
+      button.innerHTML = originalHtml;
+      button.classList.remove('bg-green-600', 'hover:bg-green-700');
+      button.classList.add('bg-blue-600', 'hover:bg-blue-700');
+    }, 2000);
+  }).catch(err => {
+    console.error('Failed to copy: ', err);
+    alert('Failed to copy text to clipboard');
+  });
+}
+
+// Optional: Add a simple toast notification function
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `fixed bottom-4 right-4 px-4 py-2 rounded-lg shadow-lg text-white z-50 transition-opacity duration-300 ${
+    type === 'success' ? 'bg-green-600' : 'bg-rose-600'
+  }`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    setTimeout(() => {
+      document.body.removeChild(toast);
+    }, 300);
+  }, 3000);
+}
+</script>
+{% endblock %}

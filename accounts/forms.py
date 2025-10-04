@@ -11,25 +11,25 @@ class SignupForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'password1', 'password2']
 
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("Email already exists")
-        return email
+    # def clean_email(self):
+    #     email = self.cleaned_data.get('email')
+    #     if User.objects.filter(email__iexact=email).exists():
+    #         raise forms.ValidationError("Email already exists")
+    #     return email
 
-    def clean_username(self):
-        username = self.cleaned_data.get('username')
-        if User.objects.filter(username__iexact=username).exists():
-            raise forms.ValidationError("Username already taken")
-        return username
+    # def clean_username(self):
+    #     username = self.cleaned_data.get('username')
+    #     if User.objects.filter(username__iexact=username).exists():
+    #         raise forms.ValidationError("Username already taken")
+    #     return username
 
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        user.email = self.cleaned_data['email']
-        user.username = self.cleaned_data['username'].lower() # making all of the username smaller letter
-        if commit:
-            user.save()
-        return user
+    # def save(self, commit=True):
+    #     user = super().save(commit=False)
+    #     user.email = self.cleaned_data['email']
+    #     user.username = self.cleaned_data['username'].lower() # making all of the username smaller letter
+    #     if commit:
+    #         user.save()
+    #     return user
 
 
 class SiginForm(forms.Form):
