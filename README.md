@@ -240,8 +240,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🆘 Support
 
-- 📧 **Email**: support@genulibrary.com
-- 🐛 **Issues**: [GitHub Issues](https://github.com/your-username/genu-library/issues)
+- 📧 **Email**: thesheikh255@gmail.com
+- 🐛 **Issues**: [GitHub Issues](thesheikh255@gmail.com)
 
 ---
 
